@@ -1,5 +1,6 @@
 package nl.trifox.foxprison.service;
 
+import com.hypixel.hytale.builtin.buildertools.BuilderToolsPlugin;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.math.vector.Transform;
 import com.hypixel.hytale.math.vector.Vector3d;
@@ -205,32 +206,32 @@ public class MineService {
         }
 
         for (BoxRegionDefinition box : mine.getRegion().getBoxes()) {
-            var min = box.getMin();
-            var max = box.getMax();
+            world.execute(() -> {
+                var min = box.getMin();
+                var max = box.getMax();
 
-            // Normalize in case min/max are swapped
-            final int minX = Math.min(min.getX(), max.getX());
-            final int minY = Math.min(min.getY(), max.getY());
-            final int minZ = Math.min(min.getZ(), max.getZ());
+                // Normalize in case min/max are swapped
+                final int minX = Math.min(min.getX(), max.getX());
+                final int minY = Math.min(min.getY(), max.getY());
+                final int minZ = Math.min(min.getZ(), max.getZ());
 
-            final int maxX = Math.max(min.getX(), max.getX());
-            final int maxY = Math.max(min.getY(), max.getY());
-            final int maxZ = Math.max(min.getZ(), max.getZ());
+                final int maxX = Math.max(min.getX(), max.getX());
+                final int maxY = Math.max(min.getY(), max.getY());
+                final int maxZ = Math.max(min.getZ(), max.getZ());
 
-            for (int x = minX; x <= maxX; x++) {
-                for (int y = minY; y <= maxY; y++) {
-                    for (int z = minZ; z <= maxZ; z++) {
-                        var blockKey = Objects
-                                .requireNonNull(pattern.nextBlockTypeKey(random))
-                                .blockTypeKey();
+                for (int x = minX; x <= maxX; x++) {
+                    for (int y = minY; y <= maxY; y++) {
+                        for (int z = minZ; z <= maxZ; z++) {
+                            var blockKey = Objects
+                                    .requireNonNull(pattern.nextBlockTypeKey(random))
+                                    .blockTypeKey();
 
-                        world.setBlock(x, y, z, blockKey);
-                        // TODO: set block based on pattern (weights etc.)
+                            world.setBlock(x, y, z, blockKey);
+                        }
                     }
                 }
-            }
+            });
         }
-
 
         return CompletableFuture.completedFuture(true);
     }

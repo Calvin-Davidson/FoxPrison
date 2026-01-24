@@ -26,7 +26,7 @@ public class SellAllCommand extends AbstractAsyncPlayerCommand {
     @NonNullDecl
     @Override
     protected CompletableFuture<Void> executeAsync(@NonNullDecl CommandContext commandContext, @NonNullDecl Store<EntityStore> store, @NonNullDecl Ref<EntityStore> ref, @NonNullDecl PlayerRef playerRef, @NonNullDecl World world) {
-        service.sellAll(playerRef);
+        //service.sellAll(playerRef);
         return CompletableFuture.completedFuture(null);
     }
 }

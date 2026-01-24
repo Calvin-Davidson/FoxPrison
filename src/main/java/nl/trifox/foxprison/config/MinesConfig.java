@@ -18,7 +18,7 @@ public class MinesConfig {
                     .add()
                     .build();
 
-    private MineDefinition[] mines = new MineDefinition[] { new MineDefinition() };
+    private MineDefinition[] mines = new MineDefinition[0];
 
     public MineDefinition[] getMines() { return mines; }
     public void setMines(MineDefinition[] mines) { this.mines = mines; }

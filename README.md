@@ -49,5 +49,3 @@ It provides all essential prison mechanics while remaining lightweight, extensib
 
 ---
 
-## 📦 Plugin Structure
-

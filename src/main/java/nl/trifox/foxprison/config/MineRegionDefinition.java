@@ -22,4 +22,11 @@ public class MineRegionDefinition {
 
     public BoxRegionDefinition[] getBoxes() { return boxes; }
     public void setBoxes(BoxRegionDefinition[] boxes) { this.boxes = boxes; }
+
+    public Boolean contains(int x, int y, int z) {
+        for (BoxRegionDefinition box : boxes) {
+            if (box.contains(x, y, z)) return true;
+        }
+        return false; // do implement
+    }
 }

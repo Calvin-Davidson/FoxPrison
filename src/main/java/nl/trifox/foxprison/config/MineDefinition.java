@@ -35,6 +35,10 @@ public class MineDefinition {
                             (m, v) -> m.blocks = v,
                             MineDefinition::getBlockPattern)
                     .add()
+                    .append(new KeyedCodec<>("AutoReset", AutoResetDefinition.CODEC),
+                            (m, v) -> m.autoReset = v,
+                            MineDefinition::getAutoReset)
+                    .add()
                     .build();
 
     private String id = "a";
@@ -44,6 +48,7 @@ public class MineDefinition {
     // Always non-null in saved config
     private Transform spawn = new Transform(0,0,0);
     private MineRegionDefinition region = new MineRegionDefinition();
+    private AutoResetDefinition autoReset = new AutoResetDefinition();
     private BlockPattern blocks;
 
     public MineDefinition() {
@@ -116,6 +121,10 @@ public class MineDefinition {
 
     public BlockPattern getBlockPattern() {
         return blocks == null ? BlockPattern.parse("100%rock_stone") : blocks;
+    }
+
+    public AutoResetDefinition getAutoReset() {
+        return this.autoReset == null ? new AutoResetDefinition() : autoReset;
     }
 
     public void setBlockPattern(BlockPattern blocks) {

@@ -18,6 +18,7 @@ import nl.trifox.foxprison.data.InMemoryPlayerDataStore;
 import nl.trifox.foxprison.data.PlayerDataStore;
 import nl.trifox.foxprison.economy.Economy;
 import nl.trifox.foxprison.economy.TheEconomyAdapter;
+import nl.trifox.foxprison.events.MineBlockBreakEvent;
 import nl.trifox.foxprison.service.MineService;
 import nl.trifox.foxprison.service.RankService;
 
@@ -33,7 +34,7 @@ public class FoxPrisonPlugin extends JavaPlugin {
     // Services (simple wiring)
     private PlayerDataStore dataStore;
     private Economy economy;
-    private MineService prisonService;
+    private MineService mineService;
     private RankService rankService;
 
     public FoxPrisonPlugin(@Nonnull JavaPluginInit init) {
@@ -46,6 +47,11 @@ public class FoxPrisonPlugin extends JavaPlugin {
     }
 
     @Override
+    protected void start() {
+        mineService.startAutoResetLoop(getTaskRegistry());
+    }
+
+    @Override
     protected void setup() {
         // Basic storage (swap later for persistent)
         this.dataStore = new InMemoryPlayerDataStore();
@@ -53,13 +59,15 @@ public class FoxPrisonPlugin extends JavaPlugin {
         // Economy abstraction (start with TheEconomy)
         this.economy = new TheEconomyAdapter(this);
 
-        this.prisonService = new MineService(this, dataStore, economy, coreConfig, economyConfig, ranksConfig, minesConfig);
+        this.mineService = new MineService(this, dataStore, economy, coreConfig, economyConfig, ranksConfig, minesConfig);
         this.rankService = new RankService(this, dataStore, economy, coreConfig, economyConfig, ranksConfig, minesConfig);
 
-        getCommandRegistry().registerCommand(new FoxPrisonCommand(this, prisonService));
-        getCommandRegistry().registerCommand(new RankUpCommand(prisonService, rankService));
-        getCommandRegistry().registerCommand(new MineCommand(prisonService));
-        getCommandRegistry().registerCommand(new SellAllCommand(prisonService));
+        getCommandRegistry().registerCommand(new FoxPrisonCommand(this, mineService));
+        getCommandRegistry().registerCommand(new RankUpCommand(mineService, rankService));
+        getCommandRegistry().registerCommand(new MineCommand(mineService));
+        getCommandRegistry().registerCommand(new SellAllCommand(mineService));
+
+        this.getEntityStoreRegistry().registerSystem(new MineBlockBreakEvent(mineService));
 
         getLogger().atInfo().log("FoxPrison setup complete.");
     }

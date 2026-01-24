@@ -1,14 +1,15 @@
 package nl.trifox.foxprison.service;
 
-import com.hypixel.hytale.builtin.buildertools.BuilderToolsPlugin;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.math.vector.Transform;
 import com.hypixel.hytale.math.vector.Vector3d;
 import com.hypixel.hytale.math.vector.Vector3f;
 import com.hypixel.hytale.math.vector.Vector3i;
+import com.hypixel.hytale.server.core.HytaleServer;
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.modules.entity.teleport.Teleport;
 import com.hypixel.hytale.server.core.prefab.selection.mask.BlockPattern;
+import com.hypixel.hytale.server.core.task.TaskRegistry;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.Universe;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
@@ -16,12 +17,15 @@ import com.hypixel.hytale.server.core.util.Config;
 
 import nl.trifox.foxprison.FoxPrisonPlugin;
 import nl.trifox.foxprison.config.*;
+import nl.trifox.foxprison.data.MineRuntimeState;
 import nl.trifox.foxprison.data.PlayerDataStore;
-import nl.trifox.foxprison.data.PlayerPrisonData;
 import nl.trifox.foxprison.economy.Economy;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 public class MineService {
 
@@ -31,6 +35,9 @@ public class MineService {
 
     private final Config<CoreConfig> core;
     private final Config<MinesConfig> mines;
+
+    private final ConcurrentHashMap<String, MineRuntimeState> mineStates = new ConcurrentHashMap<>();
+
 
     public MineService(
             FoxPrisonPlugin plugin,
@@ -176,6 +183,9 @@ public class MineService {
         return mines.save().thenApply(_ -> true);
     }
 
+    public MineRuntimeState getState(String mineId) {
+        return mineStates.computeIfAbsent(mineId.toLowerCase(), k -> new MineRuntimeState());
+    }
 
     public CompletableFuture<Boolean> SetSpawnableBlockPattern(String mineId, BlockPattern pattern) {
         mineId = mineId.trim().toLowerCase();
@@ -207,17 +217,16 @@ public class MineService {
 
         for (BoxRegionDefinition box : mine.getRegion().getBoxes()) {
             world.execute(() -> {
-                var min = box.getMin();
-                var max = box.getMax();
+                var min = box.getNormalizedMin();
+                var max = box.getNormalizedMax();
 
-                // Normalize in case min/max are swapped
-                final int minX = Math.min(min.getX(), max.getX());
-                final int minY = Math.min(min.getY(), max.getY());
-                final int minZ = Math.min(min.getZ(), max.getZ());
+                final int minX = min.getX();
+                final int minY = min.getY();
+                final int minZ = min.getZ();
 
-                final int maxX = Math.max(min.getX(), max.getX());
-                final int maxY = Math.max(min.getY(), max.getY());
-                final int maxZ = Math.max(min.getZ(), max.getZ());
+                final int maxX = max.getX();
+                final int maxY = max.getY();
+                final int maxZ = max.getZ();
 
                 for (int x = minX; x <= maxX; x++) {
                     for (int y = minY; y <= maxY; y++) {
@@ -234,5 +243,71 @@ public class MineService {
         }
 
         return CompletableFuture.completedFuture(true);
+    }
+
+    public void triggerResetIfAllowed(String mineId, long nowMs, String reason) {
+        var mineOpt = findMine(mineId);
+        if (mineOpt.isEmpty()) return;
+
+        var mine = mineOpt.get();
+        var ar = mine.getAutoReset();
+        var st = getState(mineId);
+
+        long minGapMs = (ar != null ? ar.getMinSecondsBetweenResets() : 5) * 1000L;
+        if (st.lastResetAtMs != 0 && (nowMs - st.lastResetAtMs) < minGapMs) return;
+
+        if (!st.resetInProgress.compareAndSet(false, true)) return;
+
+        resetMine(mineId, new Random())
+                .whenComplete((ok, err) -> {
+                    st.resetInProgress.set(false);
+
+                    if (err != null) {
+                        return;
+                    }
+
+                    st.brokenBlocks.set(0);
+                    st.lastResetAtMs = System.currentTimeMillis();
+
+                    int interval = (ar != null ? ar.getIntervalSeconds() : 0);
+                    st.nextIntervalResetAtMs = interval > 0
+                            ? st.lastResetAtMs + interval * 1000L
+                            : 0L;
+                });
+    }
+
+
+    public void startAutoResetLoop(TaskRegistry taskRegistry) {
+        // Runs off-thread; do NOT edit the world directly here.
+        @SuppressWarnings("unchecked")
+        ScheduledFuture<Void> future = (ScheduledFuture<Void>) HytaleServer.SCHEDULED_EXECUTOR.scheduleWithFixedDelay(
+                this::tickIntervalResets,
+                1, 1, TimeUnit.SECONDS
+        );
+
+        // Important: ensures it’s cancelled automatically when plugin unloads. :contentReference[oaicite:3]{index=3}
+        taskRegistry.registerTask(future);
+    }
+
+    private void tickIntervalResets() {
+        long now = System.currentTimeMillis();
+
+        for (var mine : getAllMines()) {
+            AutoResetDefinition ar = mine.getAutoReset();
+            if (ar == null || !ar.isEnabled()) continue;
+
+            int interval = ar.getIntervalSeconds();
+            if (interval <= 0) continue;
+
+            MineRuntimeState st = getState(mine.getId());
+
+            if (st.nextIntervalResetAtMs == 0L) {
+                st.nextIntervalResetAtMs = now + interval * 1000L;
+            }
+
+            if (now >= st.nextIntervalResetAtMs) {
+                triggerResetIfAllowed(mine.getId(), now, "interval");
+            }
+        }
     }
 }

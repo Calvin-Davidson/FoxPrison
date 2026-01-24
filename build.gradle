@@ -90,6 +90,10 @@ def createServerRunArguments(String srcDir) {
     if (!modPaths.isEmpty()) {
         programParameters += ' --mods="' + modPaths.join(',') + '"'
     }
+    if (disabled_sentry.toBoolean()) {
+        programParameters += " --disable-sentry"
+    }
+
     return programParameters
 }
 

@@ -17,6 +17,6 @@
         
     },
     "DisabledByDefault": false,
-    "Main": "nl.trifox.foxprison.FoxPrison",
+    "Main": "nl.trifox.foxprison.FoxPrisonPlugin",
     "IncludesAssetPack": true
 }

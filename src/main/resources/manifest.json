@@ -1,14 +1,14 @@
 {
-    "Group": "Example",
-    "Name": "ExamplePlugin",
-    "Version": "0.0.2",
-    "Description": "An example plugin for HyTale!",
+    "Group": "FoxPrison",
+    "Name": "FoxPrison",
+    "Version": "0.0.1",
+    "Description": "An prison plugin for hytale",
     "Authors": [
         {
-            "Name": "It's you!"
+            "Name": "Calvin Davidson"
         }
     ],
-    "Website": "example.org",
+    "Website": "https://trifox.nl/FoxPrison",
     "ServerVersion": "*",
     "Dependencies": {
         
@@ -17,6 +17,6 @@
         
     },
     "DisabledByDefault": false,
-    "Main": "org.example.plugin.ExamplePlugin",
+    "Main": "nl.trifox.foxprison.FoxPrison",
     "IncludesAssetPack": true
 }

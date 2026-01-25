@@ -6,7 +6,9 @@ import com.hypixel.hytale.codec.builder.BuilderCodec;
 import com.hypixel.hytale.codec.codecs.array.ArrayCodec;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 public final class RanksConfig {
     // Store as array for codec support
@@ -23,5 +25,10 @@ public final class RanksConfig {
                     .add()
                     .build();
 
-    public List<RankDefinition> getRanks() { return List.of(ranks); }
+    public RankDefinition[] getRanks() { return ranks; }
+
+    public Optional<RankDefinition> getRank(String rankID) {
+        return Arrays.stream(ranks).filter(x -> x.getId().equalsIgnoreCase(rankID)).findFirst();
+    }
+
 }

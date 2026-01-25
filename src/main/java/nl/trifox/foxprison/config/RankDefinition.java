@@ -20,19 +20,13 @@ public class RankDefinition {
                             (r, v, i) -> r.cost = v,
                             (r, i) -> r.cost)
                     .add()
-                    .append(new KeyedCodec<String>("UnlockMineId", Codec.STRING),
-                            (r, v, i) -> r.unlockMineId = v,
-                            (r, i) -> r.unlockMineId)
-                    .add()
                     .build();
 
     private String id = "a";
     private String displayName = "A";
     private double cost = 0.0;
-    private String unlockMineId = "a";
 
     public String getId() { return id; }
     public String getDisplayName() { return displayName; }
     public double getCost() { return cost; }
-    public String getUnlockMineId() { return unlockMineId; }
 }

@@ -1,4 +1,4 @@
-package nl.trifox.foxprison.data;
+package nl.trifox.foxprison.data.player;
 
 public class PlayerPrisonData {
     private String rankId = "a";

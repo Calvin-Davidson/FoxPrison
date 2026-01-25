@@ -1,4 +1,4 @@
-package nl.trifox.foxprison.config;
+package nl.trifox.foxprison.config.mines;
 
 import com.hypixel.hytale.codec.Codec;
 import com.hypixel.hytale.codec.KeyedCodec;
@@ -6,6 +6,7 @@ import com.hypixel.hytale.codec.builder.BuilderCodec;
 import com.hypixel.hytale.math.vector.Transform;
 import com.hypixel.hytale.math.vector.Vector3i;
 import com.hypixel.hytale.server.core.prefab.selection.mask.BlockPattern;
+import nl.trifox.foxprison.config.AutoResetDefinition;
 
 public class MineDefinition {
 
@@ -39,6 +40,10 @@ public class MineDefinition {
                             (m, v) -> m.autoReset = v,
                             MineDefinition::getAutoReset)
                     .add()
+                    .append(new KeyedCodec<>("Requirements", MineRequirementsDefinition.CODEC),
+                            MineDefinition::setRequirements,
+                            MineDefinition::getRequirements)
+                    .add()
                     .build();
 
     private String id = "a";
@@ -50,6 +55,7 @@ public class MineDefinition {
     private MineRegionDefinition region = new MineRegionDefinition();
     private AutoResetDefinition autoReset = new AutoResetDefinition();
     private BlockPattern blocks;
+    private MineRequirementsDefinition requirements = new MineRequirementsDefinition();
 
     public MineDefinition() {
     }
@@ -129,5 +135,13 @@ public class MineDefinition {
 
     public void setBlockPattern(BlockPattern blocks) {
         this.blocks = blocks;
+    }
+
+    public MineRequirementsDefinition getRequirements() {
+        return requirements;
+    }
+
+    public void setRequirements(MineRequirementsDefinition requirements) {
+        this.requirements = requirements;
     }
 }

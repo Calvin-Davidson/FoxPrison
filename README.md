@@ -45,7 +45,6 @@ It provides all essential prison mechanics while remaining lightweight, extensib
 - Create & edit mines in-game
 - Force mine reset
 - Set player ranks manually
-- Economy & balance debugging commands
 
 ---
 

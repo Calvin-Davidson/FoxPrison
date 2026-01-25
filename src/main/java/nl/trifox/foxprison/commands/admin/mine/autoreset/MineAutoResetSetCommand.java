@@ -38,29 +38,12 @@ public final class MineAutoResetSetCommand extends AbstractCommand {
     protected CompletableFuture<Void> execute(@NonNullDecl CommandContext context) {
         String id = mineId.get(context);
 
-        boolean ok = service.setAutoReset(
+        return service.setAutoReset(
                 id,
                 enabled.get(context),
                 intervalSeconds.get(context),
                 blocksBrokenThreshold.get(context),
                 minSecondsBetweenResets.provided(context) ? minSecondsBetweenResets.get(context) : null
-        );
-
-        if (!ok) {
-            context.sender().sendMessage(Message.raw("Mine not found: " + id));
-            return CompletableFuture.completedFuture(null);
-        }
-
-        context.sender().sendMessage(Message.raw(
-                "Updated autoreset for mine '" + id + "': " +
-                        "enabled=" + enabled.get(context) +
-                        ", intervalSeconds=" + intervalSeconds.get(context) +
-                        ", blocksBrokenThreshold=" + blocksBrokenThreshold.get(context) +
-                        (minSecondsBetweenResets.provided(context)
-                                ? (", minSecondsBetweenResets=" + minSecondsBetweenResets.get(context))
-                                : "")
-        ));
-
-        return CompletableFuture.completedFuture(null);
+        ).thenApply(_ -> null);
     }
 }

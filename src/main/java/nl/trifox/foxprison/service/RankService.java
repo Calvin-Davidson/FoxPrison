@@ -11,6 +11,7 @@ import nl.trifox.foxprison.data.player.PlayerDataStore;
 import nl.trifox.foxprison.data.player.PlayerPrisonData;
 import nl.trifox.foxprison.economy.Economy;
 
+import java.math.BigInteger;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -58,7 +59,7 @@ public class RankService
                 return CompletableFuture.completedFuture(false);
             }
 
-            if (!economy.withdraw(uuid, cost)) {
+            if (!economy.withdraw(uuid, BigInteger.valueOf(cost))) {
                 player.sendMessage(Message.raw("Not enough money to rank up. Need: " + cost));
                 return CompletableFuture.completedFuture(false);
             }

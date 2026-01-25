@@ -1,4 +1,4 @@
-package nl.trifox.foxprison.config;
+package nl.trifox.foxprison.config.mines;
 
 import com.hypixel.hytale.codec.Codec;
 import com.hypixel.hytale.codec.KeyedCodec;
@@ -6,6 +6,7 @@ import com.hypixel.hytale.codec.builder.BuilderCodec;
 import com.hypixel.hytale.math.vector.Transform;
 import com.hypixel.hytale.math.vector.Vector3i;
 import com.hypixel.hytale.server.core.prefab.selection.mask.BlockPattern;
+import nl.trifox.foxprison.config.AutoResetDefinition;
 
 public class MineDefinition {
 

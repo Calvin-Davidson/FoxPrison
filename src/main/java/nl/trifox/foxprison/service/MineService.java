@@ -17,6 +17,10 @@ import com.hypixel.hytale.server.core.util.Config;
 
 import nl.trifox.foxprison.FoxPrisonPlugin;
 import nl.trifox.foxprison.config.*;
+import nl.trifox.foxprison.config.mines.BoxRegionDefinition;
+import nl.trifox.foxprison.config.mines.MineDefinition;
+import nl.trifox.foxprison.config.mines.MineRegionDefinition;
+import nl.trifox.foxprison.config.mines.MinesConfig;
 import nl.trifox.foxprison.data.MineRuntimeState;
 import nl.trifox.foxprison.data.player.PlayerDataStore;
 import nl.trifox.foxprison.economy.Economy;
@@ -44,7 +48,6 @@ public class MineService {
             PlayerDataStore store,
             Economy economy,
             Config<CoreConfig> core,
-            Config<EconomyConfig> econCfg,
             Config<RanksConfig> ranks,
             Config<MinesConfig> mines
     ) {
@@ -187,6 +190,10 @@ public class MineService {
         return mineStates.computeIfAbsent(mineId.toLowerCase(), k -> new MineRuntimeState());
     }
 
+    public Optional<MineDefinition> getMine(String mineId) {
+        return Arrays.stream(mines.get().getMines()).filter(x -> x.getId().equalsIgnoreCase(mineId)).findFirst();
+    }
+
     public CompletableFuture<Boolean> SetSpawnableBlockPattern(String mineId, BlockPattern pattern) {
         mineId = mineId.trim().toLowerCase();
 
@@ -309,5 +316,9 @@ public class MineService {
                 triggerResetIfAllowed(mine.getId(), now, "interval");
             }
         }
+    }
+
+    public CompletableFuture<Boolean> setAutoReset(String id, Boolean aBoolean, Integer integer, Integer integer1, Integer integer2) {
+
     }
 }

@@ -1,10 +1,8 @@
-package nl.trifox.foxprison.config;
+package nl.trifox.foxprison.config.mines;
 
 import com.hypixel.hytale.codec.KeyedCodec;
 import com.hypixel.hytale.codec.builder.BuilderCodec;
 import com.hypixel.hytale.math.vector.Vector3i;
-
-import java.util.Vector;
 
 public class BoxRegionDefinition {
 

@@ -16,7 +16,7 @@ public class FoxPrisonCommand extends AbstractCommandCollection {
         super("foxprison", "FoxPrison admin commands");
         addAliases("fp");
 
-        addSubCommand(new MineCommand(service));
+        addSubCommand(new MineCommand(service, rankService));
         addSubCommand(new RankCommands(rankService));
     }
 }

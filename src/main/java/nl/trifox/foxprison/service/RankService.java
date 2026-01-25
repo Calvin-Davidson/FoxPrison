@@ -6,11 +6,11 @@ import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.util.Config;
 import nl.trifox.foxprison.FoxPrisonPlugin;
 import nl.trifox.foxprison.config.*;
+import nl.trifox.foxprison.config.mines.MinesConfig;
 import nl.trifox.foxprison.data.player.PlayerDataStore;
 import nl.trifox.foxprison.data.player.PlayerPrisonData;
 import nl.trifox.foxprison.economy.Economy;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -22,7 +22,6 @@ public class RankService
     private final PlayerDataStore store;
     private final Economy economy;
 
-    private final Config<EconomyConfig> econCfg;
     private final Config<RanksConfig> ranks;
 
     public RankService(
@@ -30,14 +29,12 @@ public class RankService
             PlayerDataStore store,
             Economy economy,
             Config<CoreConfig> core,
-            Config<EconomyConfig> econCfg,
             Config<RanksConfig> ranks,
             Config<MinesConfig> mines
     ) {
         this.plugin = plugin;
         this.store = store;
         this.economy = economy;
-        this.econCfg = econCfg;
         this.ranks = ranks;
     }
 

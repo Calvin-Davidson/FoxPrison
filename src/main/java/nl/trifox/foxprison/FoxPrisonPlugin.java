@@ -1,6 +1,5 @@
 package nl.trifox.foxprison;
 
-import com.hypixel.hytale.builtin.buildertools.prefabeditor.enums.WorldGenType;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
 import com.hypixel.hytale.server.core.util.Config;
@@ -12,8 +11,7 @@ import nl.trifox.foxprison.commands.player.RankUpCommand;
 import nl.trifox.foxprison.commands.player.SellAllCommand;
 
 import nl.trifox.foxprison.config.CoreConfig;
-import nl.trifox.foxprison.config.EconomyConfig;
-import nl.trifox.foxprison.config.MinesConfig;
+import nl.trifox.foxprison.config.mines.MinesConfig;
 import nl.trifox.foxprison.config.RanksConfig;
 
 import nl.trifox.foxprison.data.player.JsonPlayerDataStore;
@@ -29,7 +27,6 @@ import javax.annotation.Nonnull;
 public class FoxPrisonPlugin extends JavaPlugin {
 
     private final Config<CoreConfig> coreConfig;
-    private final Config<EconomyConfig> economyConfig;
     private final Config<RanksConfig> ranksConfig;
     private final Config<MinesConfig> minesConfig;
 
@@ -42,7 +39,6 @@ public class FoxPrisonPlugin extends JavaPlugin {
         super(init);
 
         this.coreConfig = withConfig("Core", CoreConfig.CODEC);
-        this.economyConfig = withConfig("Economy", EconomyConfig.CODEC);
         this.ranksConfig = withConfig("Ranks", RanksConfig.CODEC);
         this.minesConfig = withConfig("Mines", MinesConfig.CODEC);
 
@@ -60,8 +56,8 @@ public class FoxPrisonPlugin extends JavaPlugin {
         // Economy abstraction (start with TheEconomy)
         this.economy = new TheEconomyAdapter(this);
 
-        this.mineService = new MineService(this, dataStore, economy, coreConfig, economyConfig, ranksConfig, minesConfig);
-        this.rankService = new RankService(this, dataStore, economy, coreConfig, economyConfig, ranksConfig, minesConfig);
+        this.mineService = new MineService(this, dataStore, economy, coreConfig, ranksConfig, minesConfig);
+        this.rankService = new RankService(this, dataStore, economy, coreConfig, ranksConfig, minesConfig);
 
         getCommandRegistry().registerCommand(new FoxPrisonCommand(this, mineService, rankService));
         getCommandRegistry().registerCommand(new RankUpCommand(mineService, rankService));
@@ -75,7 +71,6 @@ public class FoxPrisonPlugin extends JavaPlugin {
     }
 
     public Config<CoreConfig> getCoreConfig() { return coreConfig; }
-    public Config<EconomyConfig> getEconomyConfig() { return economyConfig; }
     public Config<RanksConfig> getRanksConfig() { return ranksConfig; }
     public Config<MinesConfig> getMinesConfig() { return minesConfig; }
 }

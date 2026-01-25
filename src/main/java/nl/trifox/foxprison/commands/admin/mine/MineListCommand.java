@@ -3,7 +3,7 @@ package nl.trifox.foxprison.commands.admin.mine;
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.command.system.AbstractCommand;
 import com.hypixel.hytale.server.core.command.system.CommandContext;
-import nl.trifox.foxprison.config.MineDefinition;
+import nl.trifox.foxprison.config.mines.MineDefinition;
 import nl.trifox.foxprison.service.MineService;
 
 import javax.annotation.Nonnull;

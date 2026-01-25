@@ -9,6 +9,7 @@ import nl.trifox.foxprison.data.PlayerDataStore;
 import nl.trifox.foxprison.data.PlayerPrisonData;
 import nl.trifox.foxprison.economy.Economy;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public class RankService
@@ -54,7 +55,7 @@ public class RankService
             return;
         }
 
-        if (!economy.withdraw(player.getUuid(), cost)) {
+        if (!economy.withdraw(player.getUuid(), BigDecimal.valueOf(cost))) {
             player.sendMessage(Message.raw("Not enough money to rank up. Need: " + cost));
             return;
         }
@@ -78,7 +79,7 @@ public class RankService
             return;
         }
 
-        economy.deposit(player.getUuid(), examplePayout * multiplier);
+        economy.deposit(player.getUuid(), BigDecimal.valueOf(examplePayout * multiplier));
         player.sendMessage(Message.raw("Sold all for " + (examplePayout * multiplier)));
     }
     public void setRankByName(String playerName, String rankId) {

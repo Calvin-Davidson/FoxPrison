@@ -53,7 +53,7 @@ repositories {
 // the official launcher for now.
 dependencies {
     implementation(files("$hytaleHome/install/$patchline/package/game/latest/Server/HytaleServer.jar"))
-    compileOnly 'net.cfh.vault:VaultUnlocked:2.18.3'
+    compileOnly('net.cfh.vault:VaultUnlocked:2.18.3')
 }
 
 // Create the working directory to run the server if it does not already exist.

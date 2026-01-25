@@ -54,6 +54,7 @@ repositories {
 dependencies {
     implementation(files("$hytaleHome/install/$patchline/package/game/latest/Server/HytaleServer.jar"))
     compileOnly('net.cfh.vault:VaultUnlocked:2.18.3')
+    runtimeOnly('net.cfh.vault:VaultUnlocked:2.18.3')
 }
 
 // Create the working directory to run the server if it does not already exist.
@@ -83,6 +84,7 @@ tasks.named('processResources') {
     dependsOn 'updatePluginManifest'
 }
 
+
 def createServerRunArguments(String srcDir) {
     def programParameters = '--allow-op --assets="' + "${hytaleHome}/install/$patchline/package/game/latest/Assets.zip" + '"'
     def modPaths = []
@@ -108,7 +110,7 @@ idea.project.settings.runConfigurations {
     'HytaleServer'(org.jetbrains.gradle.ext.Application) {
         mainClass = 'com.hypixel.hytale.Main'
         moduleName = project.idea.module.name + '.main'
-        programParameters = createServerRunArguments(sourceSets.main.java.srcDirs.first().parentFile.absolutePath)
+        programParameters = createServerRunArguments()
         workingDirectory = serverRunDir.absolutePath
     }
 }

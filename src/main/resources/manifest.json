@@ -14,7 +14,7 @@
         
     },
     "OptionalDependencies": {
-        
+        "TheNewEconomy:VaultUnlocked": "*"
     },
     "DisabledByDefault": false,
     "Main": "nl.trifox.foxprison.FoxPrisonPlugin",

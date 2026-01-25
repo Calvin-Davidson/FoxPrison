@@ -18,7 +18,7 @@ import com.hypixel.hytale.server.core.util.Config;
 import nl.trifox.foxprison.FoxPrisonPlugin;
 import nl.trifox.foxprison.config.*;
 import nl.trifox.foxprison.data.MineRuntimeState;
-import nl.trifox.foxprison.data.PlayerDataStore;
+import nl.trifox.foxprison.data.player.PlayerDataStore;
 import nl.trifox.foxprison.economy.Economy;
 
 import java.util.*;

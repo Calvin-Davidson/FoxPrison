@@ -1,4 +1,4 @@
-package nl.trifox.foxprison.commands;
+package nl.trifox.foxprison.commands.admin.mine;
 
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.command.system.AbstractCommand;
@@ -15,7 +15,7 @@ public class MineListCommand extends AbstractCommand {
     private final MineService service;
 
     public MineListCommand(MineService service) {
-        super("minelist", "List configured mines");
+        super("list", "List configured mines");
         requirePermission("nl.trifox.foxprison.admin");
         this.service = service;
         addAliases("mines");

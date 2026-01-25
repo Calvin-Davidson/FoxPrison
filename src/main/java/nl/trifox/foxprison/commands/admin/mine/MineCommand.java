@@ -15,5 +15,6 @@ public class MineCommand extends AbstractCommandCollection {
         addSubCommand(new MineResetCommand(service));
         addSubCommand(new MineSetBlockPatternCommand(service));
         addSubCommand(new MineTpCommand(service));
+        addSubCommand(new MineListCommand(service));
     }
 }

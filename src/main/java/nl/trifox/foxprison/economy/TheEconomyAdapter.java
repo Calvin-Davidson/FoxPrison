@@ -1,7 +1,9 @@
 package nl.trifox.foxprison.economy;
 
+import net.cfh.vault.VaultUnlockedServicesManager;
 import nl.trifox.foxprison.FoxPrisonPlugin;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 /**
@@ -11,31 +13,30 @@ import java.util.UUID;
 public class TheEconomyAdapter implements Economy {
 
     private final FoxPrisonPlugin plugin;
+    private final net.milkbowl.vault2.economy.Economy api;
 
     public TheEconomyAdapter(FoxPrisonPlugin plugin) {
         this.plugin = plugin;
+        this.api = VaultUnlockedServicesManager.get().economyObj();
     }
 
     @Override
     public boolean isAvailable() {
-        // TODO: detect TheEconomy plugin / service once you wire the real API.
-        return true;
+        return api != null;
     }
 
     @Override
-    public double getBalance(UUID playerId) {
-        // TODO: TheEconomy.getBalance(playerId)
-        return 0;
+    public BigDecimal getBalance(UUID playerId) {
+        return api.balance(plugin.getName(), playerId);
     }
 
     @Override
-    public boolean withdraw(UUID playerId, double amount) {
-        // TODO: return TheEconomy.withdraw(playerId, amount).success()
-        return true;
+    public boolean withdraw(UUID playerId, BigDecimal amount) {
+        return api.withdraw(plugin.getName(), playerId, amount).transactionSuccess();
     }
 
     @Override
-    public void deposit(UUID playerId, double amount) {
-        // TODO: TheEconomy.deposit(playerId, amount)
+    public void deposit(UUID playerId, BigDecimal amount) {
+        api.deposit(plugin.getName(), playerId, amount);
     }
 }

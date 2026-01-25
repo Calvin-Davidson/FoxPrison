@@ -319,6 +319,6 @@ public class MineService {
     }
 
     public CompletableFuture<Boolean> setAutoReset(String id, Boolean aBoolean, Integer integer, Integer integer1, Integer integer2) {
-
+        return CompletableFuture.completedFuture(true);
     }
 }

@@ -18,7 +18,7 @@ public class VaultUnlockedEconomy implements Economy {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return plugin.getCoreConfig().get().isEconomyEnabled();
     }
 
     @NotNull

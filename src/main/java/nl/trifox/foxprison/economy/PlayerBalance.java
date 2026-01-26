@@ -16,7 +16,7 @@ import java.util.UUID;
  * <p>
  * NOTE: BuilderCodec keys MUST start with uppercase (PascalCase)
  */
-public class PlayerBalance {
+public  class PlayerBalance {
 
     public static final BuilderCodec<PlayerBalance> CODEC = BuilderCodec.builder(PlayerBalance.class, PlayerBalance::new)
             .append(new KeyedCodec<>("Uuid", Codec.STRING),

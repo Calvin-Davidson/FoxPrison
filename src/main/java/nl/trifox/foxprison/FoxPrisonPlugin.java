@@ -60,7 +60,7 @@ public class FoxPrisonPlugin extends JavaPlugin {
     protected void setup() {
         try {
             this.economy = new EconomyManager(this);
-            if (this.getCoreConfig().get().isEnableEconomy()) {
+            if (this.getCoreConfig().get().isEconomyEnabled()) {
                 VaultUnlockedServicesManager.get().economy(new VaultUnlockedEconomy());
             }
         } catch (Exception e) {
@@ -76,7 +76,7 @@ public class FoxPrisonPlugin extends JavaPlugin {
         getCommandRegistry().registerCommand(new SellAllCommand(mineService));
         getCommandRegistry().registerCommand(new RankCommand(rankService));
 
-        if (this.getCoreConfig().get().isEnableEconomy()) {
+        if (this.getCoreConfig().get().isEconomyEnabled()) {
             getCommandRegistry().registerCommand(new EcoAdminCommand());
             getCommandRegistry().registerCommand(new BalanceCommand());
         }

@@ -31,8 +31,8 @@ public class CoreConfig {
                             (c, i) -> c.storageProvider)
                     .add()
                     .append(new KeyedCodec<Boolean>("EnableEconomy", Codec.BOOLEAN),
-                            (c, v, i) -> c.enableEconomy = v,
-                            (c, i) -> c.enableEconomy)
+                            (c, v, i) -> c.economyEnabled = v,
+                            (c, i) -> c.economyEnabled)
                     .add()
                     .append(new KeyedCodec<Double>("StartingBalance", Codec.DOUBLE),
                             (c, v, i) -> c.startingBalance = v,
@@ -49,7 +49,7 @@ public class CoreConfig {
     private boolean debug = false;
     private String defaultCurrencySymbol = "";
     private String storageProvider = "json";
-    private boolean enableEconomy = true;
+    private boolean economyEnabled = true;
     private double startingBalance;
     private int decimalPlaces;
 
@@ -69,8 +69,8 @@ public class CoreConfig {
         return 60000; // every minute
     }
 
-    public boolean isEnableEconomy() {
-        return enableEconomy;
+    public boolean isEconomyEnabled() {
+        return economyEnabled;
     }
 
     public double getStartingBalance() {

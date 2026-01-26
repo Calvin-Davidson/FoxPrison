@@ -9,11 +9,11 @@ import java.util.UUID;
 
 /**
  * Player balance data model with security improvements.
- *
+ * <p>
  * Security fixes implemented:
  * - SEC-02: MaxBalance validation in deposit() - rejects if exceeded
  * - Internal methods for atomic operations (package-private)
- *
+ * <p>
  * NOTE: BuilderCodec keys MUST start with uppercase (PascalCase)
  */
 public class PlayerBalance {
@@ -48,7 +48,8 @@ public class PlayerBalance {
     private String lastTransaction = "";
     private long lastTransactionTime = 0;
 
-    public PlayerBalance() {}
+    public PlayerBalance() {
+    }
 
     public PlayerBalance(UUID playerUuid) {
         this.playerUuid = playerUuid;
@@ -56,7 +57,7 @@ public class PlayerBalance {
 
     /**
      * Deposit money into this account.
-     *
+     * <p>
      * Security: Rejects transaction if it would exceed maxBalance.
      * This prevents economy inflation exploits.
      *
@@ -128,12 +129,29 @@ public class PlayerBalance {
 
     // ========== Getters ==========
 
-    public UUID getPlayerUuid() { return playerUuid; }
-    public double getBalance() { return balance; }
-    public double getTotalEarned() { return totalEarned; }
-    public double getTotalSpent() { return totalSpent; }
-    public String getLastTransaction() { return lastTransaction; }
-    public long getLastTransactionTime() { return lastTransactionTime; }
+    public UUID getPlayerUuid() {
+        return playerUuid;
+    }
+
+    public double getBalance() {
+        return balance;
+    }
+
+    public double getTotalEarned() {
+        return totalEarned;
+    }
+
+    public double getTotalSpent() {
+        return totalSpent;
+    }
+
+    public String getLastTransaction() {
+        return lastTransaction;
+    }
+
+    public long getLastTransactionTime() {
+        return lastTransactionTime;
+    }
 
     public boolean hasBalance(double amount) {
         return this.balance >= amount;

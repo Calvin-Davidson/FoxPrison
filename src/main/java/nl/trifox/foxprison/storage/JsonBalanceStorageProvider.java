@@ -19,7 +19,7 @@ import java.util.stream.Stream;
 
 public class JsonBalanceStorageProvider implements BalanceStorageProvider {
 
-    private static final Path ECOTALE_PATH = Path.of("mods", "Ecotale_Ecotale");
+    private static final Path ECOTALE_PATH = Path.of("mods", "FoxPrison_FoxPrison");
     private static final Path PLAYERS_PATH = ECOTALE_PATH.resolve("players");
 
     private final HytaleLogger logger;

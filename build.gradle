@@ -45,6 +45,7 @@ javadoc {
 }
 
 repositories {
+    mavenCentral()
     maven { url 'https://repo.codemc.io/repository/creatorfromhell/' }
 }
 
@@ -55,6 +56,7 @@ dependencies {
     implementation(files("$hytaleHome/install/$patchline/package/game/latest/Server/HytaleServer.jar"))
     compileOnly('net.cfh.vault:VaultUnlocked:2.18.3')
     runtimeOnly('net.cfh.vault:VaultUnlocked:2.18.3')
+    compileOnly('org.jetbrains:annotations:26.0.2-1')
 }
 
 // Create the working directory to run the server if it does not already exist.

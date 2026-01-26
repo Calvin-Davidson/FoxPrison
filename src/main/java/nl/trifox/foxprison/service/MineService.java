@@ -23,7 +23,7 @@ import nl.trifox.foxprison.config.mines.MineRegionDefinition;
 import nl.trifox.foxprison.config.mines.MinesConfig;
 import nl.trifox.foxprison.data.MineRuntimeState;
 import nl.trifox.foxprison.data.player.PlayerDataStore;
-import nl.trifox.foxprison.economy.Economy;
+import nl.trifox.foxprison.economy.EconomyManager;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -35,7 +35,7 @@ public class MineService {
 
     private final FoxPrisonPlugin plugin;
     private final PlayerDataStore store;
-    private final Economy economy;
+    private final EconomyManager economy;
 
     private final Config<CoreConfig> core;
     private final Config<MinesConfig> mines;
@@ -46,7 +46,7 @@ public class MineService {
     public MineService(
             FoxPrisonPlugin plugin,
             PlayerDataStore store,
-            Economy economy,
+            EconomyManager economy,
             Config<CoreConfig> core,
             Config<RanksConfig> ranks,
             Config<MinesConfig> mines

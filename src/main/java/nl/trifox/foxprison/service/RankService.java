@@ -9,10 +9,8 @@ import nl.trifox.foxprison.config.*;
 import nl.trifox.foxprison.config.mines.MinesConfig;
 import nl.trifox.foxprison.data.player.PlayerDataStore;
 import nl.trifox.foxprison.data.player.PlayerPrisonData;
-import nl.trifox.foxprison.economy.Economy;
+import nl.trifox.foxprison.economy.EconomyManager;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -22,14 +20,14 @@ public class RankService
 {
     private final FoxPrisonPlugin plugin;
     private final PlayerDataStore store;
-    private final Economy economy;
+    private final EconomyManager economy;
 
     private final Config<RanksConfig> ranks;
 
     public RankService(
             FoxPrisonPlugin plugin,
             PlayerDataStore store,
-            Economy economy,
+            EconomyManager economy,
             Config<CoreConfig> core,
             Config<RanksConfig> ranks,
             Config<MinesConfig> mines
@@ -60,7 +58,7 @@ public class RankService
                 return CompletableFuture.completedFuture(false);
             }
 
-            if (!economy.withdraw(uuid, BigDecimal.valueOf(cost))) {
+            if (!economy.withdraw(uuid, cost, "rankup")) {
                 player.sendMessage(Message.raw("Not enough money to rank up. Need: " + cost));
                 return CompletableFuture.completedFuture(false);
             }

@@ -6,6 +6,8 @@ import com.hypixel.hytale.server.core.util.Config;
 
 import net.cfh.vault.VaultUnlockedServicesManager;
 import nl.trifox.foxprison.commands.FoxPrisonCommand;
+import nl.trifox.foxprison.commands.economy.BalanceCommand;
+import nl.trifox.foxprison.commands.economy.admin.EcoAdminCommand;
 import nl.trifox.foxprison.commands.player.MineCommand;
 import nl.trifox.foxprison.commands.player.RankCommand;
 import nl.trifox.foxprison.commands.player.RankUpCommand;
@@ -73,6 +75,11 @@ public class FoxPrisonPlugin extends JavaPlugin {
         getCommandRegistry().registerCommand(new MineCommand(mineService));
         getCommandRegistry().registerCommand(new SellAllCommand(mineService));
         getCommandRegistry().registerCommand(new RankCommand(rankService));
+
+        if (this.getCoreConfig().get().isEnableEconomy()) {
+            getCommandRegistry().registerCommand(new EcoAdminCommand());
+            getCommandRegistry().registerCommand(new BalanceCommand());
+        }
 
         this.getEntityStoreRegistry().registerSystem(new MineBlockBreakEvent(mineService));
 

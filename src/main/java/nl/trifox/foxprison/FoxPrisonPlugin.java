@@ -33,7 +33,7 @@ public class FoxPrisonPlugin extends JavaPlugin {
     private final Config<RanksConfig> ranksConfig;
     private final Config<MinesConfig> minesConfig;
 
-    private PlayerDataStore dataStore;
+    private final PlayerDataStore dataStore;
     private EconomyManager economy;
     private MineService mineService;
     private RankService rankService;

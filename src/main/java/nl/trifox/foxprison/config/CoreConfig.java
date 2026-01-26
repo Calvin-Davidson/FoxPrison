@@ -47,7 +47,7 @@ public class CoreConfig {
     private boolean enabled = true;
     private String defaultMineId = "a";
     private boolean debug = false;
-    private String defaultCurrencySymbol = "€";
+    private String defaultCurrencySymbol = "";
     private String storageProvider = "json";
     private boolean enableEconomy = true;
     private double startingBalance;

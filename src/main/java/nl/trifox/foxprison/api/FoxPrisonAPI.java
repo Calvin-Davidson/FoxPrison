@@ -1,6 +1,6 @@
 package nl.trifox.foxprison.api;
 
-import nl.trifox.foxprison.economy.EconomyManager;
+import nl.trifox.foxprison.modules.economy.EconomyManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.math.BigDecimal;

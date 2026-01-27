@@ -1,7 +1,7 @@
 package nl.trifox.foxprison.storage;
 
 import nl.trifox.foxprison.FoxPrisonPlugin;
-import nl.trifox.foxprison.economy.PlayerBalance;
+import nl.trifox.foxprison.modules.economy.PlayerBalance;
 import com.hypixel.hytale.codec.util.RawJsonReader;
 import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.server.core.util.BsonUtil;

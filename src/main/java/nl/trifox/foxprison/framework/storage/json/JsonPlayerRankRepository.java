@@ -27,7 +27,11 @@ public final class JsonPlayerRankRepository implements PlayerRankRepository, Aut
     private final ConcurrentHashMap<UUID, Object> locks = new ConcurrentHashMap<>();
 
     private final ExecutorService io =
-            Executors.newSingleThreadExecutor(r -> new Thread(r, "FoxPrison-IO-Ranks"));
+            Executors.newSingleThreadExecutor(r -> {
+                Thread t = new Thread(r, "FoxPrison-IO-Ranks");
+                t.setDaemon(true);
+                return t;
+            });
 
     public JsonPlayerRankRepository(FoxPrisonPlugin plugin, File folder) {
         this.plugin = plugin;
@@ -35,11 +39,27 @@ public final class JsonPlayerRankRepository implements PlayerRankRepository, Aut
     }
 
     private Object lock(UUID id) {
-        return locks.computeIfAbsent(id, _ -> new Object());
+        return locks.computeIfAbsent(id, k -> new Object());
     }
 
     private File file(UUID id) {
         return new File(folder, id.toString() + ".json");
+    }
+
+    private boolean writeSync(UUID playerId, PlayerRankData data) {
+        try {
+            if (!folder.exists() && !folder.mkdirs()) {
+                plugin.getLogger().atSevere().log("Could not create ranks folder");
+                return false;
+            }
+            try (FileWriter writer = new FileWriter(file(playerId))) {
+                gson.toJson(data, writer);
+            }
+            return true;
+        } catch (IOException e) {
+            plugin.getLogger().atSevere().log("Could not save rank data for " + playerId, e);
+            return false;
+        }
     }
 
     @Override
@@ -53,24 +73,25 @@ public final class JsonPlayerRankRepository implements PlayerRankRepository, Aut
                 if (again != null) return again;
 
                 File f = file(playerId);
-                if (!f.exists()) {
-                    PlayerRankData created = new PlayerRankData();
-                    cache.put(playerId, created);
-                    save(playerId, created).join();
-                    return created;
+                if (f.exists()) {
+                    try (FileReader reader = new FileReader(f)) {
+                        PlayerRankData loaded = gson.fromJson(reader, PlayerRankData.class);
+                        if (loaded == null) loaded = new PlayerRankData();
+                        cache.put(playerId, loaded);
+                        return loaded;
+                    } catch (IOException e) {
+                        plugin.getLogger().atSevere().log("Could not read rank data for " + playerId, e);
+                        PlayerRankData fallback = new PlayerRankData();
+                        cache.put(playerId, fallback);
+                        return fallback;
+                    }
                 }
 
-                try (FileReader reader = new FileReader(f)) {
-                    PlayerRankData loaded = gson.fromJson(reader, PlayerRankData.class);
-                    if (loaded == null) loaded = new PlayerRankData();
-                    cache.put(playerId, loaded);
-                    return loaded;
-                } catch (IOException e) {
-                    plugin.getLogger().atSevere().log("Could not read rank data for " + playerId, e);
-                    PlayerRankData fallback = new PlayerRankData();
-                    cache.put(playerId, fallback);
-                    return fallback;
-                }
+                // Create new + persist synchronously (NO save().join() here)
+                PlayerRankData created = new PlayerRankData();
+                cache.put(playerId, created);
+                writeSync(playerId, created);
+                return created;
             }
         }, io);
     }
@@ -80,19 +101,7 @@ public final class JsonPlayerRankRepository implements PlayerRankRepository, Aut
         return CompletableFuture.supplyAsync(() -> {
             synchronized (lock(playerId)) {
                 cache.put(playerId, data);
-                try {
-                    if (!folder.exists() && !folder.mkdirs()) {
-                        plugin.getLogger().atSevere().log("Could not create ranks folder");
-                        return false;
-                    }
-                    try (FileWriter writer = new FileWriter(file(playerId))) {
-                        gson.toJson(data, writer);
-                    }
-                    return true;
-                } catch (IOException e) {
-                    plugin.getLogger().atSevere().log("Could not save rank data for " + playerId, e);
-                    return false;
-                }
+                return writeSync(playerId, data);
             }
         }, io);
     }
@@ -101,6 +110,7 @@ public final class JsonPlayerRankRepository implements PlayerRankRepository, Aut
     public CompletableFuture<PlayerRankData> update(UUID playerId, UnaryOperator<PlayerRankData> mutator) {
         return CompletableFuture.supplyAsync(() -> {
             synchronized (lock(playerId)) {
+                // Load (cache first, then disk)
                 PlayerRankData current = cache.get(playerId);
                 if (current == null) {
                     File f = file(playerId);
@@ -114,16 +124,18 @@ public final class JsonPlayerRankRepository implements PlayerRankRepository, Aut
                     if (current == null) current = new PlayerRankData();
                 }
 
-                PlayerRankData mutated = mutator.apply(current);
+                // Mutate safely
+                PlayerRankData mutated;
+                try {
+                    mutated = mutator.apply(current);
+                } catch (Exception ex) {
+                    plugin.getLogger().atSevere().log("Rank mutator failed for " + playerId, ex);
+                    mutated = current;
+                }
                 if (mutated == null) mutated = current;
 
                 cache.put(playerId, mutated);
-
-                try (FileWriter writer = new FileWriter(file(playerId))) {
-                    gson.toJson(mutated, writer);
-                } catch (IOException e) {
-                    plugin.getLogger().atSevere().log("Could not save rank data for " + playerId, e);
-                }
+                writeSync(playerId, mutated);
 
                 return mutated;
             }

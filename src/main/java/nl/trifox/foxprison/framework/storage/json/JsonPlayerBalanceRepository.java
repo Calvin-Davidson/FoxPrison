@@ -13,7 +13,6 @@ import java.io.IOException;
 import java.util.UUID;
 import java.util.concurrent.*;
 import java.util.function.UnaryOperator;
-
 public final class JsonPlayerBalanceRepository implements PlayerBalanceRepository, AutoCloseable {
 
     private final FoxPrisonPlugin plugin;
@@ -24,7 +23,11 @@ public final class JsonPlayerBalanceRepository implements PlayerBalanceRepositor
     private final ConcurrentHashMap<UUID, Object> locks = new ConcurrentHashMap<>();
 
     private final ExecutorService io =
-            Executors.newSingleThreadExecutor(r -> new Thread(r, "FoxPrison-IO-Balances"));
+            Executors.newSingleThreadExecutor(r -> {
+                Thread t = new Thread(r, "FoxPrison-IO-Balances");
+                t.setDaemon(true);
+                return t;
+            });
 
     public JsonPlayerBalanceRepository(FoxPrisonPlugin plugin, File folder) {
         this.plugin = plugin;
@@ -39,10 +42,25 @@ public final class JsonPlayerBalanceRepository implements PlayerBalanceRepositor
         return new File(folder, id.toString() + ".json");
     }
 
+    private boolean writeSync(UUID playerId, PlayerBalanceData data) {
+        try {
+            if (!folder.exists() && !folder.mkdirs()) {
+                plugin.getLogger().atSevere().log("Could not create balances folder");
+                return false;
+            }
+            try (FileWriter writer = new FileWriter(file(playerId))) {
+                gson.toJson(data, writer);
+            }
+            return true;
+        } catch (IOException e) {
+            plugin.getLogger().atSevere().log("Could not save balances for " + playerId, e);
+            return false;
+        }
+    }
+
     @Override
     public CompletableFuture<PlayerBalanceData> getOrCreate(UUID playerId) {
         return CompletableFuture.supplyAsync(() -> {
-            // Fast path
             PlayerBalanceData cached = cache.get(playerId);
             if (cached != null) return cached;
 
@@ -51,25 +69,25 @@ public final class JsonPlayerBalanceRepository implements PlayerBalanceRepositor
                 if (again != null) return again;
 
                 File f = file(playerId);
-                if (!f.exists()) {
-                    PlayerBalanceData created = new PlayerBalanceData();
-                    cache.put(playerId, created);
-                    // Persist initial
-                    save(playerId, created).join();
-                    return created;
+                if (f.exists()) {
+                    try (FileReader reader = new FileReader(f)) {
+                        PlayerBalanceData loaded = gson.fromJson(reader, PlayerBalanceData.class);
+                        if (loaded == null) loaded = new PlayerBalanceData();
+                        cache.put(playerId, loaded);
+                        return loaded;
+                    } catch (IOException e) {
+                        plugin.getLogger().atSevere().log("Could not read balances for " + playerId, e);
+                        PlayerBalanceData fallback = new PlayerBalanceData();
+                        cache.put(playerId, fallback);
+                        return fallback;
+                    }
                 }
 
-                try (FileReader reader = new FileReader(f)) {
-                    PlayerBalanceData loaded = gson.fromJson(reader, PlayerBalanceData.class);
-                    if (loaded == null) loaded = new PlayerBalanceData();
-                    cache.put(playerId, loaded);
-                    return loaded;
-                } catch (IOException e) {
-                    plugin.getLogger().atSevere().log("Could not read balances for " + playerId, e);
-                    PlayerBalanceData fallback = new PlayerBalanceData();
-                    cache.put(playerId, fallback);
-                    return fallback;
-                }
+                // Create new + persist synchronously (NO save().join() here)
+                PlayerBalanceData created = new PlayerBalanceData();
+                cache.put(playerId, created);
+                writeSync(playerId, created);
+                return created;
             }
         }, io);
     }
@@ -79,21 +97,7 @@ public final class JsonPlayerBalanceRepository implements PlayerBalanceRepositor
         return CompletableFuture.supplyAsync(() -> {
             synchronized (lock(playerId)) {
                 cache.put(playerId, data);
-
-                try {
-                    if (!folder.exists() && !folder.mkdirs()) {
-                        plugin.getLogger().atSevere().log("Could not create balances folder");
-                        return false;
-                    }
-
-                    try (FileWriter writer = new FileWriter(file(playerId))) {
-                        gson.toJson(data, writer);
-                    }
-                    return true;
-                } catch (IOException e) {
-                    plugin.getLogger().atSevere().log("Could not save balances for " + playerId, e);
-                    return false;
-                }
+                return writeSync(playerId, data);
             }
         }, io);
     }
@@ -107,19 +111,24 @@ public final class JsonPlayerBalanceRepository implements PlayerBalanceRepositor
 
                 // Delete file
                 File f = file(playerId);
-                if (!f.exists()) {
-                    return true; // already gone
+                boolean ok = true;
+
+                if (f.exists()) {
+                    try {
+                        ok = f.delete();
+                        if (!ok) {
+                            plugin.getLogger().atSevere().log("Could not delete balances file for " + playerId);
+                        }
+                    } catch (SecurityException e) {
+                        plugin.getLogger().atSevere().log("Could not delete balances for " + playerId, e);
+                        ok = false;
+                    }
                 }
 
-                try {
-                    return f.delete();
-                } catch (SecurityException e) {
-                    plugin.getLogger().atSevere().log("Could not delete balances for " + playerId, e);
-                    return false;
-                } finally {
-                    // Optional: clean up lock map to avoid unbounded growth
-                    locks.remove(playerId);
-                }
+                // Optional cleanup to prevent unbounded growth
+                locks.remove(playerId);
+
+                return ok;
             }
         }, io);
     }
@@ -128,9 +137,10 @@ public final class JsonPlayerBalanceRepository implements PlayerBalanceRepositor
     public CompletableFuture<PlayerBalanceData> update(UUID playerId, UnaryOperator<PlayerBalanceData> mutator) {
         return CompletableFuture.supplyAsync(() -> {
             synchronized (lock(playerId)) {
+                // Load current state (prefer cache)
                 PlayerBalanceData current = cache.get(playerId);
+
                 if (current == null) {
-                    // Load on-demand inside lock
                     File f = file(playerId);
                     if (f.exists()) {
                         try (FileReader reader = new FileReader(f)) {
@@ -142,17 +152,21 @@ public final class JsonPlayerBalanceRepository implements PlayerBalanceRepositor
                     if (current == null) current = new PlayerBalanceData();
                 }
 
-                PlayerBalanceData mutated = mutator.apply(current);
+                // Apply mutation
+                PlayerBalanceData mutated;
+                try {
+                    mutated = mutator.apply(current);
+                } catch (Exception ex) {
+                    plugin.getLogger().atSevere().log("Balance mutator failed for " + playerId, ex);
+                    // keep current unchanged
+                    mutated = current;
+                }
+
                 if (mutated == null) mutated = current;
 
+                // Cache + persist
                 cache.put(playerId, mutated);
-
-                // Save
-                try (FileWriter writer = new FileWriter(file(playerId))) {
-                    gson.toJson(mutated, writer);
-                } catch (IOException e) {
-                    plugin.getLogger().atSevere().log("Could not save balances for " + playerId, e);
-                }
+                writeSync(playerId, mutated);
 
                 return mutated;
             }

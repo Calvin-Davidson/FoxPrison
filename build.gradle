@@ -44,11 +44,19 @@ javadoc {
     options.addStringOption('Xdoclint:-missing', '-quiet')
 }
 
+repositories {
+    mavenCentral()
+    maven { url 'https://repo.codemc.io/repository/creatorfromhell/' }
+}
+
 // Adds the Hytale server as a build dependency, allowing you to reference and
 // compile against their code. This requires you to have Hytale installed using
 // the official launcher for now.
 dependencies {
     implementation(files("$hytaleHome/install/$patchline/package/game/latest/Server/HytaleServer.jar"))
+    compileOnly('net.cfh.vault:VaultUnlocked:2.18.3')
+    runtimeOnly('net.cfh.vault:VaultUnlocked:2.18.3')
+    compileOnly('org.jetbrains:annotations:26.0.2-1')
 }
 
 // Create the working directory to run the server if it does not already exist.
@@ -78,6 +86,7 @@ tasks.named('processResources') {
     dependsOn 'updatePluginManifest'
 }
 
+
 def createServerRunArguments(String srcDir) {
     def programParameters = '--allow-op --assets="' + "${hytaleHome}/install/$patchline/package/game/latest/Assets.zip" + '"'
     def modPaths = []
@@ -85,7 +94,7 @@ def createServerRunArguments(String srcDir) {
         modPaths << srcDir
     }
     if (load_user_mods.toBoolean()) {
-        modPaths << "${hytaleHome}/UserData/Mods"
+        modPaths << "${hytaleHome}/UserData/mods"
     }
     if (!modPaths.isEmpty()) {
         programParameters += ' --mods="' + modPaths.join(',') + '"'

@@ -11,7 +11,7 @@
     "Website": "https://trifox.nl/project/FoxPrison",
     "ServerVersion": "*",
     "Dependencies": {
-        
+        "TheNewEconomy:VaultUnlocked": "*"
     },
     "OptionalDependencies": {
         

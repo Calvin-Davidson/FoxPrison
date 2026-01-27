@@ -5,7 +5,7 @@ import com.hypixel.hytale.server.core.command.system.CommandContext;
 import com.hypixel.hytale.server.core.command.system.arguments.system.RequiredArg;
 import com.hypixel.hytale.server.core.command.system.arguments.types.ArgTypes;
 import com.hypixel.hytale.server.core.command.system.basecommands.AbstractAsyncCommand;
-import nl.trifox.foxprison.service.MineService;
+import nl.trifox.foxprison.modules.mines.MineService;
 import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 
 import java.util.Random;

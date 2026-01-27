@@ -2,7 +2,6 @@ package nl.trifox.foxprison.modules.mines;
 
 import nl.trifox.foxprison.FoxPrisonPlugin;
 import nl.trifox.foxprison.modules.mines.events.MineBlockBreakEvent;
-import nl.trifox.foxprison.service.MineService;
 
 public class MinesModule {
 

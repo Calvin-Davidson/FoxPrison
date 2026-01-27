@@ -1,8 +1,7 @@
-package nl.trifox.foxprison.config;
+package nl.trifox.foxprison.modules.mines.config;
 
 import com.hypixel.hytale.codec.KeyedCodec;
 import com.hypixel.hytale.codec.builder.BuilderCodec;
-import com.hypixel.hytale.math.vector.Vector3i;
 
 public final class AutoResetDefinition {
 

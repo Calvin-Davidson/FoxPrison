@@ -4,6 +4,7 @@ import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.Universe;
 import nl.trifox.foxprison.FoxPrisonPlugin;
+import nl.trifox.foxprison.modules.economy.data.PlayerBalanceData;
 import nl.trifox.foxprison.storage.BalanceStorageProvider;
 import nl.trifox.foxprison.storage.JsonBalanceStorageProvider;
 
@@ -17,7 +18,7 @@ import java.util.stream.Collectors;
 public class EconomyManager {
 
     // In-memory cache of loaded balances
-    private final ConcurrentHashMap<UUID, PlayerBalance> cache = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<UUID, PlayerBalanceData> cache = new ConcurrentHashMap<>();
 
     // Per-player locks for atomic operations
     private final ConcurrentHashMap<UUID, ReentrantLock> playerLocks = new ConcurrentHashMap<>();
@@ -26,7 +27,7 @@ public class EconomyManager {
     private final Set<UUID> dirtyPlayers = ConcurrentHashMap.newKeySet();
 
     // Leaderboard cache
-    private volatile List<Map.Entry<UUID, PlayerBalance>> cachedLeaderboard;
+    private volatile List<Map.Entry<UUID, PlayerBalanceData>> cachedLeaderboard;
     private volatile long lastLeaderboardRebuild = 0;
 
     /** Time in milliseconds to cache leaderboard data before rebuilding */
@@ -101,7 +102,7 @@ public class EconomyManager {
     public void ensureAccount(@Nonnull UUID playerUuid) {
         cache.computeIfAbsent(playerUuid, uuid -> {
             // Load from storage or create new
-            PlayerBalance balance = storage.loadPlayer(uuid).join();
+            PlayerBalanceData balance = storage.loadPlayer(uuid).join();
             dirtyPlayers.add(uuid); // Mark as dirty to ensure it's saved
             return balance;
         });
@@ -110,7 +111,7 @@ public class EconomyManager {
     /**
      * Get an account, loading from storage if not in cache.
      */
-    private PlayerBalance getOrLoadAccount(@Nonnull UUID playerUuid) {
+    private PlayerBalanceData getOrLoadAccount(@Nonnull UUID playerUuid) {
         return cache.computeIfAbsent(playerUuid, uuid ->
                 storage.loadPlayer(uuid).join()
         );
@@ -119,11 +120,11 @@ public class EconomyManager {
     // ========== Balance Operations ==========
 
     public double getBalance(@Nonnull UUID playerUuid) {
-        PlayerBalance balance = cache.get(playerUuid);
+        PlayerBalanceData balance = cache.get(playerUuid);
         return balance != null ? balance.getBalance() : 0.0;
     }
 
-    public PlayerBalance getPlayerBalance(@Nonnull UUID playerUuid) {
+    public PlayerBalanceData getPlayerBalance(@Nonnull UUID playerUuid) {
         return cache.get(playerUuid);
     }
 
@@ -141,7 +142,7 @@ public class EconomyManager {
         ReentrantLock lock = getLock(playerUuid);
         lock.lock();
         try {
-            PlayerBalance balance = getOrLoadAccount(playerUuid);
+            PlayerBalanceData balance = getOrLoadAccount(playerUuid);
             if (balance == null) return false;
 
             double oldBalance = balance.getBalance();
@@ -166,7 +167,7 @@ public class EconomyManager {
         ReentrantLock lock = getLock(playerUuid);
         lock.lock();
         try {
-            PlayerBalance balance = cache.get(playerUuid);
+            PlayerBalanceData balance = cache.get(playerUuid);
             if (balance == null) return false;
 
             double oldBalance = balance.getBalance();
@@ -191,7 +192,7 @@ public class EconomyManager {
         ReentrantLock lock = getLock(playerUuid);
         lock.lock();
         try {
-            PlayerBalance balance = getOrLoadAccount(playerUuid);
+            PlayerBalanceData balance = getOrLoadAccount(playerUuid);
             if (balance != null) {
                 double oldBalance = balance.getBalance();
 
@@ -232,8 +233,8 @@ public class EconomyManager {
             lock2.lock();
             try {
                 // Get both balances (ensure accounts exist)
-                PlayerBalance fromBalance = getOrLoadAccount(from);
-                PlayerBalance toBalance = getOrLoadAccount(to);
+                PlayerBalanceData fromBalance = getOrLoadAccount(from);
+                PlayerBalanceData toBalance = getOrLoadAccount(to);
 
                 // Check sufficient funds INSIDE the lock
                 if (fromBalance == null || !fromBalance.hasBalance(amount)) {
@@ -265,7 +266,7 @@ public class EconomyManager {
      * Get all balances (for leaderboards).
      * Returns a snapshot copy to prevent external modification.
      */
-    public Map<UUID, PlayerBalance> getAllBalances() {
+    public Map<UUID, PlayerBalanceData> getAllBalances() {
         return new HashMap<>(cache);
     }
 
@@ -329,9 +330,9 @@ public class EconomyManager {
         dirtyPlayers.clear();
 
         // Build map of dirty players
-        Map<UUID, PlayerBalance> dirty = new HashMap<>();
+        Map<UUID, PlayerBalanceData> dirty = new HashMap<>();
         for (UUID uuid : toSave) {
-            PlayerBalance balance = cache.get(uuid);
+            PlayerBalanceData balance = cache.get(uuid);
             if (balance != null) {
                 dirty.put(uuid, balance);
             }
@@ -402,7 +403,7 @@ public class EconomyManager {
      */
     private void bulkPreload() {
         try {
-            Map<UUID, PlayerBalance> all = storage.loadAll().join();
+            Map<UUID, PlayerBalanceData> all = storage.loadAll().join();
             cache.putAll(all);
             logger.at(Level.INFO).log("Bulk preloaded %d player balances", all.size());
         } catch (Exception e) {
@@ -417,7 +418,7 @@ public class EconomyManager {
      * @param limit Maximum number of entries to return
      * @return Sorted list of top players by balance
      */
-    public List<Map.Entry<UUID, PlayerBalance>> getLeaderboard(int limit) {
+    public List<Map.Entry<UUID, PlayerBalanceData>> getLeaderboard(int limit) {
         long now = System.currentTimeMillis();
 
         // Rebuild if cache is stale or null

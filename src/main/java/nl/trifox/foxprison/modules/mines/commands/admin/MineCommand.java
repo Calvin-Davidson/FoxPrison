@@ -4,8 +4,8 @@ import com.hypixel.hytale.server.core.command.system.basecommands.AbstractComman
 import nl.trifox.foxprison.modules.mines.commands.admin.autoreset.MineAutoResetCommands;
 import nl.trifox.foxprison.modules.mines.commands.admin.region.MineRegionCommand;
 import nl.trifox.foxprison.modules.mines.commands.admin.requirements.MineRequirementCommands;
-import nl.trifox.foxprison.service.MineService;
-import nl.trifox.foxprison.service.RankService;
+import nl.trifox.foxprison.modules.mines.MineService;
+import nl.trifox.foxprison.modules.ranks.RankService;
 
 public class MineCommand extends AbstractCommandCollection {
     public MineCommand(MineService mineService, RankService rankService) {

@@ -8,9 +8,9 @@ import com.hypixel.hytale.component.system.EntityEventSystem;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.event.events.ecs.BreakBlockEvent;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
-import nl.trifox.foxprison.config.AutoResetDefinition;
-import nl.trifox.foxprison.data.MineRuntimeState;
-import nl.trifox.foxprison.service.MineService;
+import nl.trifox.foxprison.modules.mines.config.AutoResetDefinition;
+import nl.trifox.foxprison.modules.mines.data.MineRuntimeState;
+import nl.trifox.foxprison.modules.mines.MineService;
 import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 

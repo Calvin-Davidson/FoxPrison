@@ -8,9 +8,9 @@ import nl.trifox.foxprison.modules.economy.EconomyModule;
 import nl.trifox.foxprison.modules.mines.MinesModule;
 import nl.trifox.foxprison.modules.ranks.RankModule;
 
-import nl.trifox.foxprison.config.CoreConfig;
-import nl.trifox.foxprison.config.mines.MinesConfig;
-import nl.trifox.foxprison.config.RanksConfig;
+import nl.trifox.foxprison.framework.config.CoreConfig;
+import nl.trifox.foxprison.modules.mines.config.MinesConfig;
+import nl.trifox.foxprison.modules.ranks.config.RanksConfig;
 
 import javax.annotation.Nonnull;
 

@@ -1,7 +1,7 @@
 package nl.trifox.foxprison.storage;
 
 import nl.trifox.foxprison.FoxPrisonPlugin;
-import nl.trifox.foxprison.modules.economy.PlayerBalance;
+import nl.trifox.foxprison.modules.economy.data.PlayerBalanceData;
 import com.hypixel.hytale.codec.util.RawJsonReader;
 import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.server.core.util.BsonUtil;
@@ -51,20 +51,20 @@ public class JsonBalanceStorageProvider implements BalanceStorageProvider {
     }
 
     @Override
-    public CompletableFuture<PlayerBalance> loadPlayer(@Nonnull UUID playerUuid) {
+    public CompletableFuture<PlayerBalanceData> loadPlayer(@Nonnull UUID playerUuid) {
         return CompletableFuture.supplyAsync(() -> {
             Path playerFile = getPlayerFile(playerUuid);
 
             if (!Files.exists(playerFile)) {
                 // Create new account with starting balance
-                PlayerBalance newBalance = new PlayerBalance(playerUuid);
+                PlayerBalanceData newBalance = new PlayerBalanceData(playerUuid);
                 newBalance.setBalance(FoxPrisonPlugin.getInstance().getCoreConfig().get().getStartingBalance(), "Initial balance");
                 playerCount.incrementAndGet();
                 return newBalance;
             }
 
             try {
-                PlayerBalance balance = RawJsonReader.readSync(playerFile, PlayerBalance.CODEC, logger);
+                PlayerBalanceData balance = RawJsonReader.readSync(playerFile, PlayerBalanceData.CODEC, logger);
                 if (balance != null) {
                     return balance;
                 }
@@ -75,7 +75,7 @@ public class JsonBalanceStorageProvider implements BalanceStorageProvider {
                 Path backupFile = getBackupFile(playerUuid);
                 if (Files.exists(backupFile)) {
                     try {
-                        PlayerBalance backup = RawJsonReader.readSync(backupFile, PlayerBalance.CODEC, logger);
+                        PlayerBalanceData backup = RawJsonReader.readSync(backupFile, PlayerBalanceData.CODEC, logger);
                         if (backup != null) {
                             logger.at(Level.INFO).log("Restored %s from backup", playerUuid);
                             return backup;
@@ -88,14 +88,14 @@ public class JsonBalanceStorageProvider implements BalanceStorageProvider {
 
             // Fallback: create new account
             logger.at(Level.WARNING).log("Creating new account for %s after load failure", playerUuid);
-            PlayerBalance fallback = new PlayerBalance(playerUuid);
+            PlayerBalanceData fallback = new PlayerBalanceData(playerUuid);
             fallback.setBalance(FoxPrisonPlugin.getInstance().getCoreConfig().get().getStartingBalance(), "Recovery - initial balance");
             return fallback;
         });
     }
 
     @Override
-    public CompletableFuture<Void> savePlayer(@Nonnull UUID playerUuid, @Nonnull PlayerBalance balance) {
+    public CompletableFuture<Void> savePlayer(@Nonnull UUID playerUuid, @Nonnull PlayerBalanceData balance) {
         return CompletableFuture.runAsync(() -> {
             Path playerFile = getPlayerFile(playerUuid);
             Path backupFile = getBackupFile(playerUuid);
@@ -103,7 +103,7 @@ public class JsonBalanceStorageProvider implements BalanceStorageProvider {
 
             try {
                 // Step 1: Write to temp file first
-                BsonUtil.writeSync(tempFile, PlayerBalance.CODEC, balance, logger);
+                BsonUtil.writeSync(tempFile, PlayerBalanceData.CODEC, balance, logger);
 
                 // Step 2: Backup existing file (if any)
                 if (Files.exists(playerFile)) {
@@ -135,7 +135,7 @@ public class JsonBalanceStorageProvider implements BalanceStorageProvider {
     }
 
     @Override
-    public CompletableFuture<Void> saveAll(@Nonnull Map<UUID, PlayerBalance> dirtyPlayers) {
+    public CompletableFuture<Void> saveAll(@Nonnull Map<UUID, PlayerBalanceData> dirtyPlayers) {
         if (dirtyPlayers.isEmpty()) {
             return CompletableFuture.completedFuture(null);
         }
@@ -151,9 +151,9 @@ public class JsonBalanceStorageProvider implements BalanceStorageProvider {
     }
 
     @Override
-    public CompletableFuture<Map<UUID, PlayerBalance>> loadAll() {
+    public CompletableFuture<Map<UUID, PlayerBalanceData>> loadAll() {
         return CompletableFuture.supplyAsync(() -> {
-            Map<UUID, PlayerBalance> allBalances = new ConcurrentHashMap<>();
+            Map<UUID, PlayerBalanceData> allBalances = new ConcurrentHashMap<>();
 
             try (Stream<Path> files = Files.list(PLAYERS_PATH)) {
                 files.filter(p -> p.toString().endsWith(".json") && !p.toString().endsWith(".bak"))
@@ -162,7 +162,7 @@ public class JsonBalanceStorageProvider implements BalanceStorageProvider {
                             String uuidStr = filename.replace(".json", "");
                             try {
                                 UUID uuid = UUID.fromString(uuidStr);
-                                PlayerBalance balance = RawJsonReader.readSync(path, PlayerBalance.CODEC, logger);
+                                PlayerBalanceData balance = RawJsonReader.readSync(path, PlayerBalanceData.CODEC, logger);
                                 if (balance != null) {
                                     allBalances.put(uuid, balance);
                                 }

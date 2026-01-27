@@ -1,4 +1,4 @@
-package nl.trifox.foxprison.data;
+package nl.trifox.foxprison.modules.mines.data;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;

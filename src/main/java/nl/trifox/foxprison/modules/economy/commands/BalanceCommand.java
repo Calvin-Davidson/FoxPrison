@@ -10,7 +10,7 @@ import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import nl.trifox.foxprison.FoxPrisonPlugin;
-import nl.trifox.foxprison.modules.economy.PlayerBalance;
+import nl.trifox.foxprison.modules.economy.data.PlayerBalanceData;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -30,7 +30,7 @@ public class BalanceCommand extends AbstractAsyncPlayerCommand {
             return CompletableFuture.runAsync(() -> {
 
                 FoxPrisonPlugin.getEconomyModule().getEconomyManager().ensureAccount(playerRef.getUuid());
-                PlayerBalance balance = FoxPrisonPlugin.getEconomyModule().getEconomyManager().getPlayerBalance(playerRef.getUuid());
+                PlayerBalanceData balance = FoxPrisonPlugin.getEconomyModule().getEconomyManager().getPlayerBalance(playerRef.getUuid());
 
                 if (balance == null) {
                     playerRef.sendMessage(Message.raw("Error: Could not load balance").color(Color.RED));

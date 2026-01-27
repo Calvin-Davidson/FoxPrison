@@ -1,7 +1,7 @@
 package nl.trifox.foxprison.modules.ranks.commands.admin;
 
 import com.hypixel.hytale.server.core.command.system.basecommands.AbstractCommandCollection;
-import nl.trifox.foxprison.service.RankService;
+import nl.trifox.foxprison.modules.ranks.RankService;
 
 public class RankCommands extends AbstractCommandCollection {
 

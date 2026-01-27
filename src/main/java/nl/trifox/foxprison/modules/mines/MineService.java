@@ -1,4 +1,4 @@
-package nl.trifox.foxprison.service;
+package nl.trifox.foxprison.modules.mines;
 
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.math.vector.Transform;
@@ -15,12 +15,9 @@ import com.hypixel.hytale.server.core.universe.Universe;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.server.core.util.Config;
 
-import nl.trifox.foxprison.config.*;
-import nl.trifox.foxprison.config.mines.BoxRegionDefinition;
-import nl.trifox.foxprison.config.mines.MineDefinition;
-import nl.trifox.foxprison.config.mines.MineRegionDefinition;
-import nl.trifox.foxprison.config.mines.MinesConfig;
-import nl.trifox.foxprison.data.MineRuntimeState;
+import nl.trifox.foxprison.framework.config.CoreConfig;
+import nl.trifox.foxprison.modules.mines.config.*;
+import nl.trifox.foxprison.modules.mines.data.MineRuntimeState;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;

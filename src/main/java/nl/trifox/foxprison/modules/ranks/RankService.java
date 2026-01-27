@@ -1,13 +1,14 @@
-package nl.trifox.foxprison.service;
+package nl.trifox.foxprison.modules.ranks;
 
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.command.system.CommandSender;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.util.Config;
-import nl.trifox.foxprison.config.*;
-import nl.trifox.foxprison.data.player.PlayerDataStore;
-import nl.trifox.foxprison.data.player.PlayerPrisonData;
+import nl.trifox.foxprison.framework.storage.repositories.PlayerRankRepository;
+import nl.trifox.foxprison.modules.ranks.data.PlayerRankData;
 import nl.trifox.foxprison.modules.economy.EconomyManager;
+import nl.trifox.foxprison.modules.ranks.config.RankDefinition;
+import nl.trifox.foxprison.modules.ranks.config.RanksConfig;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -16,13 +17,13 @@ import java.util.stream.IntStream;
 
 public class RankService
 {
-    private final PlayerDataStore store;
+    private final PlayerRankRepository store;
     private final EconomyManager economy;
 
     private final Config<RanksConfig> ranks;
 
     public RankService(
-            PlayerDataStore store,
+            PlayerRankRepository store,
             EconomyManager economy,
             Config<RanksConfig> ranks
     ) {
@@ -80,7 +81,7 @@ public class RankService
     }
 
     public CompletableFuture<String> getRankIdByPlayer(PlayerRef player) {
-        return store.getOrCreate(player.getUuid()).thenApply(PlayerPrisonData::getRankId);
+        return store.getOrCreate(player.getUuid()).thenApply(PlayerRankData::getRankId);
     }
 
     private int indexOfRank(RankDefinition[] ranks, String rankId) {

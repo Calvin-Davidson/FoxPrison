@@ -1,4 +1,4 @@
-package nl.trifox.foxprison.config;
+package nl.trifox.foxprison.framework.config;
 
 import com.hypixel.hytale.codec.Codec;
 import com.hypixel.hytale.codec.KeyedCodec;

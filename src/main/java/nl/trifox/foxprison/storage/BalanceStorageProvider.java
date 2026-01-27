@@ -1,6 +1,6 @@
 package nl.trifox.foxprison.storage;
 
-import nl.trifox.foxprison.modules.economy.PlayerBalance;
+import nl.trifox.foxprison.modules.economy.data.PlayerBalanceData;
 
-public interface BalanceStorageProvider extends StorageProvider<PlayerBalance> {
+public interface BalanceStorageProvider extends StorageProvider<PlayerBalanceData> {
 }

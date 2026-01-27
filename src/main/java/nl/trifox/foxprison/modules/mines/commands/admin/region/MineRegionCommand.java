@@ -1,7 +1,7 @@
 package nl.trifox.foxprison.modules.mines.commands.admin.region;
 
 import com.hypixel.hytale.server.core.command.system.basecommands.AbstractCommandCollection;
-import nl.trifox.foxprison.service.MineService;
+import nl.trifox.foxprison.modules.mines.MineService;
 
 public class MineRegionCommand extends AbstractCommandCollection {
 

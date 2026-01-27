@@ -3,8 +3,8 @@ package nl.trifox.foxprison.modules.ranks.commands.admin;
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.command.system.AbstractCommand;
 import com.hypixel.hytale.server.core.command.system.CommandContext;
-import nl.trifox.foxprison.config.RankDefinition;
-import nl.trifox.foxprison.service.RankService;
+import nl.trifox.foxprison.modules.ranks.config.RankDefinition;
+import nl.trifox.foxprison.modules.ranks.RankService;
 import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 

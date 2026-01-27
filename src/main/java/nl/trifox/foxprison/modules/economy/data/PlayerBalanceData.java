@@ -1,4 +1,4 @@
-package nl.trifox.foxprison.modules.economy;
+package nl.trifox.foxprison.modules.economy.data;
 
 import com.hypixel.hytale.codec.Codec;
 import com.hypixel.hytale.codec.KeyedCodec;
@@ -16,9 +16,9 @@ import java.util.UUID;
  * <p>
  * NOTE: BuilderCodec keys MUST start with uppercase (PascalCase)
  */
-public  class PlayerBalance {
+public  class PlayerBalanceData {
 
-    public static final BuilderCodec<PlayerBalance> CODEC = BuilderCodec.builder(PlayerBalance.class, PlayerBalance::new)
+    public static final BuilderCodec<PlayerBalanceData> CODEC = BuilderCodec.builder(PlayerBalanceData.class, PlayerBalanceData::new)
             .append(new KeyedCodec<>("Uuid", Codec.STRING),
                     (p, v, extraInfo) -> p.playerUuid = UUID.fromString(v),
                     (p, extraInfo) -> p.playerUuid.toString()).add()
@@ -39,7 +39,7 @@ public  class PlayerBalance {
                     (p, extraInfo) -> p.lastTransactionTime).add()
             .build();
 
-    public static final ArrayCodec<PlayerBalance> ARRAY_CODEC = new ArrayCodec<>(CODEC, PlayerBalance[]::new, PlayerBalance::new);
+    public static final ArrayCodec<PlayerBalanceData> ARRAY_CODEC = new ArrayCodec<>(CODEC, PlayerBalanceData[]::new, PlayerBalanceData::new);
 
     private UUID playerUuid;
     private double balance = 0;
@@ -48,10 +48,10 @@ public  class PlayerBalance {
     private String lastTransaction = "";
     private long lastTransactionTime = 0;
 
-    public PlayerBalance() {
+    public PlayerBalanceData() {
     }
 
-    public PlayerBalance(UUID playerUuid) {
+    public PlayerBalanceData(UUID playerUuid) {
         this.playerUuid = playerUuid;
     }
 

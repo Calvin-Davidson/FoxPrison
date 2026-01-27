@@ -109,7 +109,7 @@ public  class PlayerBalanceData {
      * Internal deposit - NO validation.
      * ONLY call from EconomyManager.transfer() with lock held.
      */
-    void depositInternal(double amount, String reason) {
+    public void depositUnsafe(double amount, String reason) {
         this.balance += amount;
         this.totalEarned += amount;
         this.lastTransaction = "+" + amount + " (" + reason + ")";
@@ -120,7 +120,7 @@ public  class PlayerBalanceData {
      * Internal withdraw - NO validation.
      * ONLY call from EconomyManager.transfer() with lock held.
      */
-    void withdrawInternal(double amount, String reason) {
+    public void withdrawUnsafe(double amount, String reason) {
         this.balance -= amount;
         this.totalSpent += amount;
         this.lastTransaction = "-" + amount + " (" + reason + ")";

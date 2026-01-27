@@ -243,8 +243,8 @@ public class EconomyManager {
 
 
                 // ATOMIC: Both operations under lock
-                fromBalance.withdrawInternal(amount, "Transfer to " + to + ": " + reason);
-                toBalance.depositInternal(amount, "Transfer from " + from + ": " + reason);
+                fromBalance.withdrawUnsafe(amount, "Transfer to " + to + ": " + reason);
+                toBalance.depositUnsafe(amount, "Transfer from " + from + ": " + reason);
 
                 // Mark both as dirty
                 dirtyPlayers.add(from);

@@ -189,7 +189,7 @@ public class VaultUnlockedEconomy implements Economy {
     @Override
     public boolean deleteAccount(@NotNull final String pluginName, @NotNull final UUID accountID) {
 
-        FoxPrisonPlugin.getEconomyModule().getEconomyManager().getStorage().deletePlayer(accountID);
+        FoxPrisonPlugin.getEconomyModule().getEconomyManager().getStorage().delete(accountID);
         return true;
     }
 

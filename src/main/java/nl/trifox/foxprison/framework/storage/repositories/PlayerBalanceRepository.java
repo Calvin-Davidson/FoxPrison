@@ -12,6 +12,8 @@ public interface PlayerBalanceRepository {
 
     CompletableFuture<Boolean> save(UUID playerId, PlayerBalanceData data);
 
+    CompletableFuture<Boolean> delete(UUID playerId);
+
     /**
      * Atomic-ish update for a single player (locks per UUID in implementation).
      */

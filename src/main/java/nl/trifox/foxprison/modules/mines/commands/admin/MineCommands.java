@@ -7,8 +7,8 @@ import nl.trifox.foxprison.modules.mines.commands.admin.requirements.MineRequire
 import nl.trifox.foxprison.modules.mines.MineService;
 import nl.trifox.foxprison.modules.ranks.RankService;
 
-public class MineCommand extends AbstractCommandCollection {
-    public MineCommand(MineService mineService, RankService rankService) {
+public class MineCommands extends AbstractCommandCollection {
+    public MineCommands(MineService mineService, RankService rankService) {
         super("mine", "Mine management");
         requirePermission("nl.trifox.foxprison.admin");
 

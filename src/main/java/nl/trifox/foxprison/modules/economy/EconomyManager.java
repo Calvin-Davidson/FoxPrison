@@ -4,12 +4,13 @@ import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.Universe;
 import nl.trifox.foxprison.FoxPrisonPlugin;
+import nl.trifox.foxprison.framework.storage.StorageProvider;
+import nl.trifox.foxprison.framework.storage.repositories.PlayerBalanceRepository;
 import nl.trifox.foxprison.modules.economy.data.PlayerBalanceData;
-import nl.trifox.foxprison.storage.BalanceStorageProvider;
-import nl.trifox.foxprison.storage.JsonBalanceStorageProvider;
 
 import javax.annotation.Nonnull;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
@@ -49,30 +50,11 @@ public class EconomyManager {
     private volatile boolean running = true;
     private final Thread saveThread;
     private final HytaleLogger logger;
-    private BalanceStorageProvider storage;
+    private StorageProvider storage;
 
-    public EconomyManager(FoxPrisonPlugin plugin) throws Exception {
+    public EconomyManager(FoxPrisonPlugin plugin, StorageProvider storage) throws Exception {
         this.logger = HytaleLogger.getLogger().getSubLogger("Ecotale");
-
-        // Initialize storage provider based on config
-        String providerType = FoxPrisonPlugin.getInstance().getCoreConfig().get().getStorageProvider().toLowerCase();
-        switch (providerType) {
-            case "mysql" -> {
-                //this.storage = new MySQLStorageProvider();
-                logger.at(Level.INFO).log("Using MySQL storage provider (shared database)");
-            }
-            case "json" -> {
-                this.storage = new JsonBalanceStorageProvider();
-                logger.at(Level.INFO).log("Using JSON storage provider");
-            }
-            default -> {
-                throw new Exception("no valid storage provider selected");
-            }
-        }
-        storage.initialize().join();
-
-        // PERF-01: Bulk preload all player data on startup
-        bulkPreload();
+        this.storage = storage;
 
         // Start auto-save thread
         this.saveThread = new Thread(this::autoSaveLoop, "Ecotale-AutoSave");
@@ -102,7 +84,7 @@ public class EconomyManager {
     public void ensureAccount(@Nonnull UUID playerUuid) {
         cache.computeIfAbsent(playerUuid, uuid -> {
             // Load from storage or create new
-            PlayerBalanceData balance = storage.loadPlayer(uuid).join();
+            PlayerBalanceData balance = storage.balances().getOrCreate(uuid).join();
             dirtyPlayers.add(uuid); // Mark as dirty to ensure it's saved
             return balance;
         });
@@ -113,7 +95,7 @@ public class EconomyManager {
      */
     private PlayerBalanceData getOrLoadAccount(@Nonnull UUID playerUuid) {
         return cache.computeIfAbsent(playerUuid, uuid ->
-                storage.loadPlayer(uuid).join()
+                storage.balances().getOrCreate(uuid).join()
         );
     }
 
@@ -338,13 +320,43 @@ public class EconomyManager {
             }
         }
 
-        // Save asynchronously
-        storage.saveAll(dirty).exceptionally(e -> {
-            logger.at(Level.SEVERE).log("Auto-save failed: %s", e.getMessage());
-            // Re-mark as dirty for retry on next cycle
-            dirtyPlayers.addAll(toSave);
-            return null;
-        });
+        var failed = ConcurrentHashMap.<UUID>newKeySet();
+
+        CompletableFuture<?>[] tasks = dirty.entrySet().stream()
+                .map(entry -> {
+                    UUID uuid = entry.getKey();
+                    PlayerBalanceData data = entry.getValue();
+
+                    return storage.balances()
+                            .save(uuid, data) // CompletableFuture<Boolean>
+                            .handle((ok, ex) -> {
+                                if (ex != null) {
+                                    failed.add(uuid);
+                                    logger.atSevere().log("Auto-save failed for " + uuid + ": " + ex.getMessage(), ex);
+                                } else if (!Boolean.TRUE.equals(ok)) {
+                                    failed.add(uuid);
+                                    logger.atSevere().log("Auto-save returned false for " + uuid);
+                                }
+                                return null;
+                            });
+                })
+                .toArray(CompletableFuture[]::new);
+
+        CompletableFuture.allOf(tasks)
+                .whenComplete((v, ex) -> {
+                    // (ex shouldn't happen often since we handled per-task, but keep it safe)
+                    if (ex != null) {
+                        logger.atSevere().log("Auto-save batch failed: " + ex.getMessage(), ex);
+                        // re-mark everything dirty if the batch itself exploded
+                        dirtyPlayers.addAll(dirty.keySet());
+                        return;
+                    }
+
+                    // Re-mark only failed players for retry next cycle
+                    if (!failed.isEmpty()) {
+                        dirtyPlayers.addAll(failed);
+                    }
+                });
     }
 
     /**
@@ -364,23 +376,11 @@ public class EconomyManager {
         if (!cache.isEmpty()) {
             logger.at(Level.INFO).log("Saving %d player balances...", cache.size());
             try {
-                storage.saveAll(cache).get(10, java.util.concurrent.TimeUnit.SECONDS);
+                forceSave();
                 logger.at(Level.INFO).log("Player balances saved successfully");
-            } catch (java.util.concurrent.TimeoutException e) {
-                logger.at(Level.WARNING).log("Save operation timed out after 10 seconds - data may be lost");
             } catch (Exception e) {
                 logger.at(Level.SEVERE).log("Error saving player balances: %s", e.getMessage());
             }
-        }
-
-        // Shutdown storage provider
-        logger.at(Level.INFO).log("Shutting down storage provider...");
-        try {
-            storage.shutdown().get(5, java.util.concurrent.TimeUnit.SECONDS);
-        } catch (java.util.concurrent.TimeoutException e) {
-            logger.at(Level.WARNING).log("Storage shutdown timed out after 5 seconds");
-        } catch (Exception e) {
-            logger.at(Level.SEVERE).log("Error during storage shutdown: %s", e.getMessage());
         }
 
         logger.at(Level.INFO).log("EconomyManager shutdown complete");
@@ -391,25 +391,12 @@ public class EconomyManager {
     /**
      * Get the storage provider.
      */
-    public BalanceStorageProvider getStorage() {
-        return storage;
+    public PlayerBalanceRepository getStorage() {
+        return storage.balances();
     }
 
     // ========== Performance Optimizations ==========
 
-    /**
-     * PERF-01: Bulk preload all player data on startup.
-     * Avoids blocking .join() calls during player joins.
-     */
-    private void bulkPreload() {
-        try {
-            Map<UUID, PlayerBalanceData> all = storage.loadAll().join();
-            cache.putAll(all);
-            logger.at(Level.INFO).log("Bulk preloaded %d player balances", all.size());
-        } catch (Exception e) {
-            logger.at(Level.WARNING).log("Bulk preload failed, will load on-demand: %s", e.getMessage());
-        }
-    }
 
     /**
      * PERF-02: Get leaderboard with caching and rate-limit.

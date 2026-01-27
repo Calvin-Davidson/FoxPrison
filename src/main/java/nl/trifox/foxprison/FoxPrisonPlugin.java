@@ -4,6 +4,7 @@ import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
 import com.hypixel.hytale.server.core.util.Config;
 
+import nl.trifox.foxprison.framework.storage.StorageModule;
 import nl.trifox.foxprison.modules.economy.EconomyModule;
 import nl.trifox.foxprison.modules.mines.MinesModule;
 import nl.trifox.foxprison.modules.ranks.RankModule;
@@ -19,6 +20,7 @@ public class FoxPrisonPlugin extends JavaPlugin {
     private static EconomyModule economyModule;
     private static RankModule rankModule;
     private static MinesModule mineModule;
+    private static StorageModule storageModule;
 
     private final Config<CoreConfig> coreConfig;
     private final Config<RanksConfig> ranksConfig;
@@ -42,21 +44,33 @@ public class FoxPrisonPlugin extends JavaPlugin {
     public static RankModule getRankModule() {
         return rankModule;
     }
+    public static MinesModule getMineModule() {return mineModule;}
 
     public static EconomyModule getEconomyModule() {
         return economyModule;
     }
 
+    public static StorageModule getStorageModule() {
+        return storageModule;
+    }
+
     @Override
     protected void start() {
-        mineModule.Start();
+
+
     }
 
     @Override
     protected void setup() {
-        economyModule = new EconomyModule();
-        rankModule = new RankModule();
-        mineModule = new MinesModule();
+        storageModule = new StorageModule(this, coreConfig.get());
+        economyModule = new EconomyModule(this, storageModule); // pass deps, avoid static getters
+        rankModule    = new RankModule(this, storageModule, economyModule);
+        mineModule    = new MinesModule(this, rankModule);      // or pass RankService supplier
+
+        storageModule.start();  // provider.init()
+        economyModule.start();  // builds EconomyManager + registers Vault service + commands
+        rankModule.start();     // builds RankService + registers rank commands
+        mineModule.start();     // registers mine commands that need rank service, starts loops
 
         getLogger().atInfo().log("FoxPrison setup complete.");
     }

@@ -99,6 +99,32 @@ public final class JsonPlayerBalanceRepository implements PlayerBalanceRepositor
     }
 
     @Override
+    public CompletableFuture<Boolean> delete(UUID playerId) {
+        return CompletableFuture.supplyAsync(() -> {
+            synchronized (lock(playerId)) {
+                // Remove cached copy
+                cache.remove(playerId);
+
+                // Delete file
+                File f = file(playerId);
+                if (!f.exists()) {
+                    return true; // already gone
+                }
+
+                try {
+                    return f.delete();
+                } catch (SecurityException e) {
+                    plugin.getLogger().atSevere().log("Could not delete balances for " + playerId, e);
+                    return false;
+                } finally {
+                    // Optional: clean up lock map to avoid unbounded growth
+                    locks.remove(playerId);
+                }
+            }
+        }, io);
+    }
+
+    @Override
     public CompletableFuture<PlayerBalanceData> update(UUID playerId, UnaryOperator<PlayerBalanceData> mutator) {
         return CompletableFuture.supplyAsync(() -> {
             synchronized (lock(playerId)) {

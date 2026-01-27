@@ -2,8 +2,9 @@ package nl.trifox.foxprison.framework.storage;
 
 import nl.trifox.foxprison.FoxPrisonPlugin;
 import nl.trifox.foxprison.framework.config.CoreConfig;
+import nl.trifox.foxprison.framework.module.FoxModule;
 
-public final class StorageModule {
+public final class StorageModule implements FoxModule {
 
     private final StorageProvider provider;
 
@@ -11,6 +12,7 @@ public final class StorageModule {
         this.provider = StorageFactory.create(plugin, core);
     }
 
+    @Override
     public void start() {
         provider.init();
     }

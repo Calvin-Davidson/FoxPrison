@@ -10,6 +10,8 @@ public interface StorageProvider extends AutoCloseable {
     PlayerBalanceRepository balances();
     PlayerRankRepository ranks();
 
+    String getName();
+
     @Override
     void close();
 }

@@ -45,6 +45,11 @@ public final class JsonStorageProvider implements StorageProvider {
     }
 
     @Override
+    public String getName() {
+        return "json";
+    }
+
+    @Override
     public void close() {
         // Repos hold their own executors; close them if you want (shown below)
         if (balances instanceof AutoCloseable c) {

@@ -12,7 +12,15 @@ public final class StorageFactory {
     private StorageFactory() {}
 
     public static StorageProvider create(FoxPrisonPlugin plugin, CoreConfig core) {
-        StorageProviderType type = Enum.valueOf(StorageProviderType.class, core.getStorageProvider());
+        String raw = core.getStorageProvider();
+
+        StorageProviderType type = java.util.Arrays.stream(StorageProviderType.values())
+                .filter(v -> v.name().equalsIgnoreCase(raw))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Unknown storage provider: " + raw + " (expected one of: " +
+                                java.util.Arrays.toString(StorageProviderType.values()) + ")"
+                ));
 
         if (type == StorageProviderType.JSON) {
             File base = new File(plugin.getDataDirectory().toFile(), "storage/json"); // adjust if your API differs

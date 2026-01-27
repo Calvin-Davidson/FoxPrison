@@ -33,8 +33,8 @@ public final class EconomyModule implements FoxModule {
         VaultUnlockedServicesManager.get().economy(new VaultUnlockedEconomy(/* ideally pass economyManager */));
 
         var registry = plugin.getCommandRegistry();
-        registry.registerCommand(new BalanceCommand(/* economyManager */));
-        registry.registerCommand(new EcoAdminCommand(/* economyManager */));
+        registry.registerCommand(new BalanceCommand());
+        registry.registerCommand(new EcoAdminCommand());
     }
 
     public EconomyManager getEconomyManager() {

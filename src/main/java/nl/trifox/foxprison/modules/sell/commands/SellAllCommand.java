@@ -159,9 +159,7 @@ public class SellAllCommand extends AbstractAsyncPlayerCommand {
                 }
 
                 String msg = "Sold " + stacksSold + " stacks (" + itemsSold + " items) for $" + MONEY_FMT.format(total) + ".";
-                if (unsellableStacks.get() > 0 && s.isSkipUnsellable()) {
-                    msg += " Skipped " + unsellableStacks + " unsellable stacks.";
-                }
+               
                 playerRef.sendMessage(Message.raw(msg));
                 done.complete(null);
 

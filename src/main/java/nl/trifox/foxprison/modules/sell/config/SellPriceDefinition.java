@@ -43,6 +43,15 @@ public final class SellPriceDefinition {
     public boolean isAllowSell() { return allowSell; }
     public boolean isAllowSellAll() { return allowSellAll; }
 
+    public SellPriceDefinition(double price, String currency) {
+        this.priceEach = price;
+        this.currency = currency;
+    }
+
+    public SellPriceDefinition() {
+
+    }
+
     public String resolveCurrency(String defaultCurrency) {
         if (currency == null || currency.isBlank()) return defaultCurrency;
         return currency;

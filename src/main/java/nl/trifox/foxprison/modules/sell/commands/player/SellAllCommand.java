@@ -1,4 +1,4 @@
-package nl.trifox.foxprison.modules.sell.commands;
+package nl.trifox.foxprison.modules.sell.commands.player;
 
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
@@ -159,7 +159,7 @@ public class SellAllCommand extends AbstractAsyncPlayerCommand {
                 }
 
                 String msg = "Sold " + stacksSold + " stacks (" + itemsSold + " items) for $" + MONEY_FMT.format(total) + ".";
-               
+
                 playerRef.sendMessage(Message.raw(msg));
                 done.complete(null);
 

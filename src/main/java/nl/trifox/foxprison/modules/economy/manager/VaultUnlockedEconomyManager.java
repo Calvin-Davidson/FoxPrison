@@ -63,4 +63,16 @@ public class VaultUnlockedEconomyManager implements EconomyManager {
     public boolean isAvailable() {
         return economy != null;
     }
+
+    @Override
+    public void forceSave() {
+        // not supported
+    }
+
+    @Override
+    public void ensureAccount(UUID uuid) {
+        if (!economy.hasAccount(uuid)) {
+            economy.createAccount(uuid, pluginName, true);
+        }
+    }
 }

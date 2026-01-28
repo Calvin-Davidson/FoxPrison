@@ -17,4 +17,8 @@ public interface EconomyManager {
     TransferResult transfer(@Nonnull UUID from, @Nonnull UUID to, double amount, String reason);
 
     boolean isAvailable();
+
+    void forceSave();
+
+    void ensureAccount(UUID uuid);
 }

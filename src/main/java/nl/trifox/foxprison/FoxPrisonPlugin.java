@@ -72,10 +72,11 @@ public class FoxPrisonPlugin extends JavaPlugin {
         mineModule    = new MinesModule(this, rankModule);
         sellModule    = new SellModule(this, economyModule, sellConfig.get());
 
-        storageModule.start();  // provider.init()
-        economyModule.start();  // builds EconomyManager + registers Vault service + commands
-        rankModule.start();     // builds RankService + registers rank commands
-        mineModule.start();     // registers mine commands that need rank service, starts loops
+        storageModule.start();
+        economyModule.start();
+        rankModule.start();
+        mineModule.start();
+        sellModule.start();;
 
         getLogger().atInfo().log("FoxPrison setup complete.");
     }

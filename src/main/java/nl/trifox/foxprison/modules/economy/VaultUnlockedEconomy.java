@@ -161,8 +161,7 @@ public class VaultUnlockedEconomy implements Economy {
 
     @Override
     public boolean hasAccount(@NotNull final UUID accountID) {
-
-        return FoxPrisonPlugin.getEconomyModule().getEconomyManager().getAllBalances().containsKey(accountID);
+        return true; // not implemented
     }
 
     @Override
@@ -188,8 +187,7 @@ public class VaultUnlockedEconomy implements Economy {
 
     @Override
     public boolean deleteAccount(@NotNull final String pluginName, @NotNull final UUID accountID) {
-
-        FoxPrisonPlugin.getEconomyModule().getEconomyManager().getStorage().delete(accountID);
+        // not implemented
         return true;
     }
 

@@ -30,18 +30,12 @@ public class BalanceCommand extends AbstractAsyncPlayerCommand {
             return CompletableFuture.runAsync(() -> {
 
                 FoxPrisonPlugin.getEconomyModule().getEconomyManager().ensureAccount(playerRef.getUuid());
-                PlayerBalanceData balance = FoxPrisonPlugin.getEconomyModule().getEconomyManager().getPlayerBalance(playerRef.getUuid());
-
-                if (balance == null) {
-                    playerRef.sendMessage(Message.raw("Error: Could not load balance").color(Color.RED));
-                    return;
-                }
-
+                var balance = FoxPrisonPlugin.getEconomyModule().getEconomyManager().getBalance(playerRef.getUuid());
 
                 playerRef.sendMessage(Message.raw("----- Your Balance -----").color(new Color(255, 215, 0)));
                 playerRef.sendMessage(Message.join(
                         Message.raw("  Balance: ").color(Color.GRAY),
-                        Message.raw(FoxPrisonPlugin.getInstance().getCoreConfig().get().format(balance.getBalance())).color(new Color(50, 205, 50)).bold(true)
+                        Message.raw(FoxPrisonPlugin.getInstance().getCoreConfig().get().format(balance)).color(new Color(50, 205, 50)).bold(true)
                 ));
 
             });

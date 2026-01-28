@@ -29,11 +29,6 @@ public final class SellAllDefinition {
                             cfg -> cfg.includeOffhand)
                     .add()
 
-                    .append(new KeyedCodec<>("SkipUnsellable", Codec.BOOLEAN),
-                            (cfg, v) -> cfg.skipUnsellable = v,
-                            cfg -> cfg.skipUnsellable)
-                    .add()
-
                     .build();
 
     private boolean includeHotbar = true;
@@ -41,14 +36,10 @@ public final class SellAllDefinition {
     private boolean includeEquipment = false;
     private boolean includeOffhand = true;
 
-    /** If true, /sellall ignores items that have no price entry (instead of erroring). */
-    private boolean skipUnsellable = true;
-
     public SellAllDefinition() {}
 
     public boolean isIncludeHotbar() { return includeHotbar; }
     public boolean isIncludeMainInventory() { return includeMainInventory; }
     public boolean isIncludeEquipment() { return includeEquipment; }
     public boolean isIncludeOffhand() { return includeOffhand; }
-    public boolean isSkipUnsellable() { return skipUnsellable; }
 }

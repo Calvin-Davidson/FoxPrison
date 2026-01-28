@@ -24,15 +24,11 @@ public final class RankModule implements FoxModule {
 
     @Override
     public void start() {
-        // If economy is disabled, decide what RankService should do:
-        // - either allow rankups without money,
-        // - or block rankups,
-        // - or use a NullEconomy implementation.
         var economy = economyModule.getEconomyManager();
 
         this.rankService = new RankService(storageModule.provider().ranks(), economy, plugin.getRanksConfig());
 
-        plugin.getCommandRegistry().registerCommand(new RankUpCommand(FoxPrisonPlugin.getMineModule().getMineService(), rankService));
+        plugin.getCommandRegistry().registerCommand(new RankUpCommand(rankService));
         plugin.getCommandRegistry().registerCommand(new RankCommands(rankService));
         plugin.getCommandRegistry().registerCommand(new RankCommand(rankService));
     }

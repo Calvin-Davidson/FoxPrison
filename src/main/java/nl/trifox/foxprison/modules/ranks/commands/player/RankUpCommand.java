@@ -8,7 +8,6 @@ import com.hypixel.hytale.server.core.command.system.basecommands.AbstractAsyncP
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
-import nl.trifox.foxprison.modules.mines.MineService;
 import nl.trifox.foxprison.modules.ranks.RankService;
 import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 
@@ -17,12 +16,10 @@ import java.util.concurrent.CompletableFuture;
 public class RankUpCommand extends AbstractAsyncPlayerCommand {
 
     private final RankService rankService;
-    private final MineService mineService;
 
-    public RankUpCommand(MineService service, RankService rankService) {
+    public RankUpCommand(RankService rankService) {
         super("rankup", "Rank up to the next rank");
         this.rankService = rankService;
-        this.mineService = service;
         addAliases("ru");
         // No requirePermission(): let everyone use rankup (or add a player perm later)
     }

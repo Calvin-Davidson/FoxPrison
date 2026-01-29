@@ -75,4 +75,9 @@ public class VaultUnlockedEconomyManager implements EconomyManager {
             economy.createAccount(uuid, pluginName, true);
         }
     }
+
+    @Override
+    public String getDefaultCurrencyID() {
+        return economy.getDefaultCurrency(pluginName);
+    }
 }

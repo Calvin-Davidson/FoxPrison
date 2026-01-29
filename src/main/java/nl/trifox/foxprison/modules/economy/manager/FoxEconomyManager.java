@@ -94,6 +94,11 @@ public class FoxEconomyManager implements EconomyManager {
         });
     }
 
+    @Override
+    public String getDefaultCurrencyID() {
+        return "coins";
+    }
+
     /**
      * Get an account, loading from storage if not in cache.
      */

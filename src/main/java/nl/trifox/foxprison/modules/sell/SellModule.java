@@ -30,6 +30,6 @@ public class SellModule implements FoxModule {
             foxPrisonPlugin.getCommandRegistry().registerCommand(new SellAllCommand(economyModule.getEconomyManager(), sellConfig));
         }
 
-        foxPrisonPlugin.getCommandRegistry().registerCommand(new SellAdminCommands(sellConfig));
+        foxPrisonPlugin.getCommandRegistry().registerCommand(new SellAdminCommands(sellConfig, economyModule.getEconomyManager()));
     }
 }

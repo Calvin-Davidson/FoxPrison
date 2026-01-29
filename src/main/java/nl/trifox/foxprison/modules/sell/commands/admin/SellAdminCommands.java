@@ -13,6 +13,7 @@ import com.hypixel.hytale.server.core.inventory.Inventory;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.inventory.container.CombinedItemContainer;
 import nl.trifox.foxprison.FoxPrisonPlugin;
+import nl.trifox.foxprison.modules.economy.EconomyManager;
 import nl.trifox.foxprison.modules.sell.config.SellConfig;
 import nl.trifox.foxprison.modules.sell.config.SellPriceDefinition;
 
@@ -26,14 +27,14 @@ import java.util.concurrent.CompletableFuture;
  */
 public final class SellAdminCommands extends AbstractCommandCollection {
 
-    public SellAdminCommands(@Nonnull SellConfig config) {
+    public SellAdminCommands(@Nonnull SellConfig config, @Nonnull EconomyManager economyManager) {
         super("selladmin", "Admin: manage /sell prices");
         requirePermission("foxprison.sell.admin");
 
         addAliases("sa");
 
-        addSubCommand(new SetPriceSub(config));
-        addSubCommand(new SumSub(config));
+        addSubCommand(new SetPriceSub(config, economyManager));
+        addSubCommand(new SumSub(config, economyManager));
         // You can add more later (getprice, remove, list, reload, etc.)
     }
 
@@ -44,21 +45,23 @@ public final class SellAdminCommands extends AbstractCommandCollection {
     private static final class SetPriceSub extends AbstractAsyncCommand {
 
         private final SellConfig sell;
+        private final EconomyManager economyManager;
 
         private final RequiredArg<Double> priceArg;
         private final OptionalArg<String> itemArg;
         private final OptionalArg<String> currencyArg;
         private final FlagArg noSaveFlag;
 
-        private SetPriceSub(SellConfig sell) {
+        private SetPriceSub(SellConfig sell, EconomyManager economyManager) {
             super("setprice", "Set sell price for an item (defaults to item in hand)");
             this.sell = Objects.requireNonNull(sell);
+            this.economyManager = economyManager;
 
             requirePermission("foxprison.sell.admin.setprice");
 
             priceArg = withRequiredArg("price", "Price per item", ArgTypes.DOUBLE);
             itemArg = withOptionalArg("item", "ItemId (if omitted, uses item in hand)", ArgTypes.STRING);
-            currencyArg = withOptionalArg("currency", "Currency id (default: money)", ArgTypes.STRING);
+            currencyArg = withOptionalArg("currency", "Currency id (defaults to global default)", ArgTypes.STRING);
             noSaveFlag = withFlagArg("nosave", "Do not persist to disk");
         }
 
@@ -81,8 +84,8 @@ public final class SellAdminCommands extends AbstractCommandCollection {
                 return CompletableFuture.completedFuture(null);
             }
 
-            String currency = currencyArg.provided(context) ? safeTrim(currencyArg.get(context)) : "money";
-            if (currency == null || currency.isBlank()) currency = "money";
+            String currency = currencyArg.provided(context) ? safeTrim(currencyArg.get(context)) : economyManager.getDefaultCurrencyID();
+            if (currency == null || currency.isBlank()) currency = economyManager.getDefaultCurrencyID();
 
             SellPriceDefinition def = new SellPriceDefinition(price, currency);
             sell.setPrice(itemId, def);
@@ -114,7 +117,7 @@ public final class SellAdminCommands extends AbstractCommandCollection {
         private final SellConfig sell;
         private final OptionalArg<String> scopeArg;
 
-        private SumSub(SellConfig sell) {
+        private SumSub(SellConfig sell, EconomyManager economyManager) {
             super("sum", "Show total sell value (hand or inventory)");
             this.sell = Objects.requireNonNull(sell);
 

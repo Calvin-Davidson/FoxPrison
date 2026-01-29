@@ -21,4 +21,6 @@ public interface EconomyManager {
     void forceSave();
 
     void ensureAccount(UUID uuid);
+
+    String getDefaultCurrencyID();
 }

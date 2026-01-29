@@ -19,74 +19,81 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 
+import com.google.gson.Gson;
+import com.hypixel.hytale.logger.HytaleLogger;
+
+import javax.annotation.Nonnull;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 public class FoxEconomyManager implements EconomyManager {
 
-    // In-memory cache of loaded balances
     private final ConcurrentHashMap<UUID, PlayerBalanceData> cache = new ConcurrentHashMap<>();
-
-    // Per-player locks for atomic operations
     private final ConcurrentHashMap<UUID, ReentrantLock> playerLocks = new ConcurrentHashMap<>();
-
-    // Tracks which players have unsaved changes
     private final Set<UUID> dirtyPlayers = ConcurrentHashMap.newKeySet();
 
     // Leaderboard cache
     private volatile List<Map.Entry<UUID, PlayerBalanceData>> cachedLeaderboard;
     private volatile long lastLeaderboardRebuild = 0;
 
-    /** Time in milliseconds to cache leaderboard data before rebuilding */
     private static final long LEADERBOARD_CACHE_MS = 2000;
-
-    /** Maximum number of entries to cache in the leaderboard for performance */
     private static final int MAX_LEADERBOARD_CACHE_SIZE = 100;
-
-    /** Number of characters to show when displaying truncated UUIDs */
     private static final int UUID_PREVIEW_LENGTH = 8;
 
-    // Lock eviction timing
     private volatile long lastLockCleanup = System.currentTimeMillis();
-
-    /** Time in milliseconds between lock cleanup cycles (30 minutes) */
     private static final long LOCK_CLEANUP_INTERVAL_MS = 30 * 60 * 1000;
 
-    // Auto-save thread
     private volatile boolean running = true;
     private final Thread saveThread;
-    private final HytaleLogger logger;
-    private StorageProvider storage;
+    private final AtomicBoolean saving = new AtomicBoolean(false);
 
-    public FoxEconomyManager(FoxPrisonPlugin plugin, StorageProvider storage) throws Exception {
+    private final HytaleLogger logger;
+    private final StorageProvider storage;
+
+    // Used ONLY to deep-copy snapshots for saving (prevents torn writes).
+    private final Gson snapshotGson = new Gson();
+
+    public FoxEconomyManager(FoxPrisonPlugin plugin, StorageProvider storage) {
         this.logger = HytaleLogger.getLogger().getSubLogger("Ecotale");
         this.storage = storage;
 
-        // Start auto-save thread
         this.saveThread = new Thread(this::autoSaveLoop, "Ecotale-AutoSave");
         this.saveThread.setDaemon(true);
         this.saveThread.start();
 
-        logger.at(Level.INFO).log("EconomyManager initialized with %s (%d players preloaded)",
+        logger.at(Level.INFO).log("EconomyManager initialized with %s (%d players cached)",
                 storage.getName(), cache.size());
     }
 
     // ========== Lock Management ==========
 
-    /**
-     * Get or create a lock for a specific player.
-     * Locks are cached and reused for the same player.
-     */
     private ReentrantLock getLock(UUID playerUuid) {
         return playerLocks.computeIfAbsent(playerUuid, k -> new ReentrantLock());
     }
 
-    // ========== Player Account Management ==========
+    private static boolean isValidDelta(double amount) {
+        return amount > 0.0 && Double.isFinite(amount);
+    }
 
-    /**
-     * Ensure a player has an account (load from storage or create new).
-     * This is called when a player joins the server.
-     */
+    private static boolean isValidBalance(double amount) {
+        return amount >= 0.0 && Double.isFinite(amount);
+    }
+
+    private PlayerBalanceData deepCopy(PlayerBalanceData data) {
+        // Snapshot by JSON roundtrip (safe and simple). If you add a copy() method later, switch to that.
+        return snapshotGson.fromJson(snapshotGson.toJson(data), PlayerBalanceData.class);
+    }
+
+    // ========== Account Management ==========
+
     public void ensureAccount(@Nonnull UUID playerUuid) {
         cache.computeIfAbsent(playerUuid, uuid -> storage.balances().getOrCreate(uuid).join());
+        // IMPORTANT: don't mark dirty on load. Only mark dirty on actual mutation.
     }
 
     @Override
@@ -94,117 +101,76 @@ public class FoxEconomyManager implements EconomyManager {
         return "coins";
     }
 
-    /**
-     * Get an account, loading from storage if not in cache.
-     */
     private PlayerBalanceData getOrLoadAccount(@Nonnull UUID playerUuid) {
-        return cache.computeIfAbsent(playerUuid, uuid ->
-                storage.balances().getOrCreate(uuid).join()
-        );
+        return cache.computeIfAbsent(playerUuid, uuid -> storage.balances().getOrCreate(uuid).join());
     }
 
-    // ========== Balance Operations ==========
+    // ========== Balance Ops ==========
 
     public double getBalance(@Nonnull UUID playerUuid) {
         PlayerBalanceData balance = cache.get(playerUuid);
         return balance != null ? balance.getBalance() : 0.0;
     }
 
-
     public boolean hasBalance(@Nonnull UUID playerUuid, double amount) {
         return getBalance(playerUuid) >= amount;
     }
 
-    /**
-     * Deposit money into a player's account.
-     * Thread-safe with per-player locking.
-     * Rejects if would exceed maxBalance.
-     * Fires BalanceChangeEvent (cancellable).
-     */
     public boolean deposit(@Nonnull UUID playerUuid, double amount, String reason) {
+        if (!isValidDelta(amount)) return false;
+
         ReentrantLock lock = getLock(playerUuid);
         lock.lock();
         try {
             PlayerBalanceData balance = getOrLoadAccount(playerUuid);
             if (balance == null) return false;
 
-            double oldBalance = balance.getBalance();
-            double newBalance = oldBalance + amount;
-
-            if (balance.deposit(amount, reason)) {
-                dirtyPlayers.add(playerUuid);
-                return true;
-            }
-            return false;
+            boolean ok = balance.deposit(amount, reason);
+            if (ok) dirtyPlayers.add(playerUuid);
+            return ok;
         } finally {
             lock.unlock();
         }
     }
 
-    /**
-     * Withdraw money from a player's account.
-     * Thread-safe with per-player locking.
-     * Fires BalanceChangeEvent (cancellable).
-     */
     public boolean withdraw(@Nonnull UUID playerUuid, double amount, String reason) {
+        if (!isValidDelta(amount)) return false;
+
         ReentrantLock lock = getLock(playerUuid);
         lock.lock();
         try {
+            // FIX: load if missing (previously cache.get() caused false negatives)
             PlayerBalanceData balance = getOrLoadAccount(playerUuid);
             if (balance == null) return false;
 
-            double oldBalance = balance.getBalance();
-            double newBalance = oldBalance - amount;
-
-            if (balance.withdraw(amount, reason)) {
-                dirtyPlayers.add(playerUuid);
-                return true;
-            }
-            return false;
+            boolean ok = balance.withdraw(amount, reason);
+            if (ok) dirtyPlayers.add(playerUuid);
+            return ok;
         } finally {
             lock.unlock();
         }
     }
 
-    /**
-     * Set a player's balance to a specific amount.
-     * Thread-safe with per-player locking.
-     * Fires BalanceChangeEvent (cancellable).
-     */
     public void setBalance(@Nonnull UUID playerUuid, double amount, String reason) {
+        if (!isValidBalance(amount)) return;
+
         ReentrantLock lock = getLock(playerUuid);
         lock.lock();
         try {
             PlayerBalanceData balance = getOrLoadAccount(playerUuid);
-            if (balance != null) {
-                double oldBalance = balance.getBalance();
+            if (balance == null) return;
 
-                balance.setBalance(amount, reason);
-                dirtyPlayers.add(playerUuid);
-            }
+            balance.setBalance(amount, reason);
+            dirtyPlayers.add(playerUuid);
         } finally {
             lock.unlock();
         }
     }
 
-    /**
-     * Transfer money between two players.
-     * ATOMIC: Either both operations succeed or neither does.
-     * Uses ordered lock acquisition to prevent deadlocks.
-     *
-     * Security: Fixes SEC-01 (race condition) and DATA-01 (non-atomic transfer)
-     */
     public TransferResult transfer(@Nonnull UUID from, @Nonnull UUID to, double amount, String reason) {
-        if (from.equals(to)) {
-            return TransferResult.SELF_TRANSFER;
-        }
+        if (from.equals(to)) return TransferResult.SELF_TRANSFER;
+        if (!isValidDelta(amount)) return TransferResult.INVALID_AMOUNT;
 
-        if (amount <= 0) {
-            return TransferResult.INVALID_AMOUNT;
-        }
-
-        // CRITICAL: Ordered lock acquisition to prevent deadlock
-        // Always lock the "smaller" UUID first (consistent ordering)
         UUID first = from.compareTo(to) < 0 ? from : to;
         UUID second = from.compareTo(to) < 0 ? to : from;
 
@@ -215,26 +181,25 @@ public class FoxEconomyManager implements EconomyManager {
         try {
             lock2.lock();
             try {
-                // Get both balances (ensure accounts exist)
                 PlayerBalanceData fromBalance = getOrLoadAccount(from);
                 PlayerBalanceData toBalance = getOrLoadAccount(to);
 
-                // Check sufficient funds INSIDE the lock
-                if (fromBalance == null || !fromBalance.hasBalance(amount)) {
+                if (fromBalance == null || toBalance == null) {
+                    return TransferResult.FAILED;
+                }
+
+                if (!fromBalance.hasBalance(amount)) {
                     return TransferResult.INSUFFICIENT_FUNDS;
                 }
 
-
-                // ATOMIC: Both operations under lock
+                // Atomic under both locks
                 fromBalance.withdrawUnsafe(amount, "Transfer to " + to + ": " + reason);
                 toBalance.depositUnsafe(amount, "Transfer from " + from + ": " + reason);
 
-                // Mark both as dirty
                 dirtyPlayers.add(from);
                 dirtyPlayers.add(to);
 
                 return TransferResult.SUCCESS;
-
             } finally {
                 lock2.unlock();
             }
@@ -243,93 +208,94 @@ public class FoxEconomyManager implements EconomyManager {
         }
     }
 
-    // ========== Bulk Operations ==========
-
-    /**
-     * Get all balances (for leaderboards).
-     * Returns a snapshot copy to prevent external modification.
-     */
-    public Map<UUID, PlayerBalanceData> getAllBalances() {
-        return new HashMap<>(cache);
-    }
-
-    /**
-     * Get the number of cached players.
-     */
-    public int getCachedPlayerCount() {
-        return cache.size();
-    }
-
     // ========== Persistence ==========
 
-    /**
-     * Mark a player as needing to be saved.
-     */
     public void markDirty(@Nonnull UUID playerUuid) {
         dirtyPlayers.add(playerUuid);
     }
 
-    /**
-     * Force save all dirty players immediately.
-     */
     public void forceSave() {
-        saveDirtyPlayers();
+        // Save current dirty set and wait for completion
+        saveDirtyPlayersAsync().join();
     }
 
-    /**
-     * Auto-save loop running on background thread.
-     * Only saves players that have changes (dirty tracking).
-     */
     private void autoSaveLoop() {
         while (running) {
             try {
-                Thread.sleep(FoxPrisonPlugin.getInstance().getCoreConfig().get().getAutoSaveInterval() * 1000L);
+                long intervalMs = FoxPrisonPlugin.getInstance()
+                        .getCoreConfig().get().getAutoSaveInterval() * 1000L;
 
-                if (!dirtyPlayers.isEmpty()) {
-                    saveDirtyPlayers();
+                Thread.sleep(intervalMs);
+
+                if (!dirtyPlayers.isEmpty() && saving.compareAndSet(false, true)) {
+                    saveDirtyPlayersAsync()
+                            .whenComplete((v, ex) -> saving.set(false));
                 }
 
-                // PERF-03: Lock eviction for offline players (every 30 min)
                 if (System.currentTimeMillis() - lastLockCleanup > LOCK_CLEANUP_INTERVAL_MS) {
                     cleanupStaleLocks();
                     lastLockCleanup = System.currentTimeMillis();
                 }
             } catch (InterruptedException e) {
                 break;
+            } catch (Throwable t) {
+                logger.atSevere().log("Auto-save loop error: " + t.getMessage(), t);
             }
         }
     }
 
-    /**
-     * Save all dirty players asynchronously.
-     */
-    private void saveDirtyPlayers() {
-        if (dirtyPlayers.isEmpty()) {
-            return;
-        }
+    private CompletableFuture<Void> saveDirtyPlayersAsync() {
+        // We remove dirty marks per-player under the same lock used for mutation,
+        // and snapshot data while locked (prevents torn writes).
+        List<UUID> candidates = new ArrayList<>(dirtyPlayers);
+        if (candidates.isEmpty()) return CompletableFuture.completedFuture(null);
 
-        // Snapshot and clear dirty set
-        Set<UUID> toSave = new HashSet<>(dirtyPlayers);
-        dirtyPlayers.clear();
+        Map<UUID, PlayerBalanceData> snapshots = new HashMap<>();
+        Set<UUID> removed = new HashSet<>();
 
-        // Build map of dirty players
-        Map<UUID, PlayerBalanceData> dirty = new HashMap<>();
-        for (UUID uuid : toSave) {
-            PlayerBalanceData balance = cache.get(uuid);
-            if (balance != null) {
-                dirty.put(uuid, balance);
+        for (UUID uuid : candidates) {
+            ReentrantLock lock = getLock(uuid);
+            lock.lock();
+            try {
+                if (!dirtyPlayers.contains(uuid)) continue; // already handled
+                PlayerBalanceData live = cache.get(uuid);
+                if (live == null) {
+                    // Nothing to save; just drop dirty flag
+                    dirtyPlayers.remove(uuid);
+                    removed.add(uuid);
+                    continue;
+                }
+
+                PlayerBalanceData snap;
+                try {
+                    snap = deepCopy(live);
+                } catch (Exception ex) {
+                    // If snapshot fails, keep dirty so it retries later
+                    logger.atSevere().log("Snapshot failed for " + uuid + ": " + ex.getMessage(), ex);
+                    continue;
+                }
+
+                // Now that we have a consistent snapshot, clear dirty for this player
+                dirtyPlayers.remove(uuid);
+                removed.add(uuid);
+
+                snapshots.put(uuid, snap);
+            } finally {
+                lock.unlock();
             }
         }
 
+        if (snapshots.isEmpty()) return CompletableFuture.completedFuture(null);
+
         var failed = ConcurrentHashMap.<UUID>newKeySet();
 
-        CompletableFuture<?>[] tasks = dirty.entrySet().stream()
+        CompletableFuture<?>[] tasks = snapshots.entrySet().stream()
                 .map(entry -> {
                     UUID uuid = entry.getKey();
-                    PlayerBalanceData data = entry.getValue();
+                    PlayerBalanceData snap = entry.getValue();
 
                     return storage.balances()
-                            .save(uuid, data) // CompletableFuture<Boolean>
+                            .save(uuid, snap) // CompletableFuture<Boolean>
                             .handle((ok, ex) -> {
                                 if (ex != null) {
                                     failed.add(uuid);
@@ -343,41 +309,32 @@ public class FoxEconomyManager implements EconomyManager {
                 })
                 .toArray(CompletableFuture[]::new);
 
-        CompletableFuture.allOf(tasks)
+        return CompletableFuture.allOf(tasks)
                 .whenComplete((v, ex) -> {
-                    // (ex shouldn't happen often since we handled per-task, but keep it safe)
-                    if (ex != null) {
-                        logger.atSevere().log("Auto-save batch failed: " + ex.getMessage(), ex);
-                        // re-mark everything dirty if the batch itself exploded
-                        dirtyPlayers.addAll(dirty.keySet());
-                        return;
-                    }
-
-                    // Re-mark only failed players for retry next cycle
+                    // Re-mark only failed players
                     if (!failed.isEmpty()) {
                         dirtyPlayers.addAll(failed);
+                    }
+                    // If batch itself exploded, re-mark all snapshots
+                    if (ex != null) {
+                        logger.atSevere().log("Auto-save batch failed: " + ex.getMessage(), ex);
+                        dirtyPlayers.addAll(snapshots.keySet());
                     }
                 });
     }
 
-    /**
-     * Shutdown the economy manager.
-     * Saves all dirty players and stops the auto-save thread.
-     */
     public void shutdown() {
         logger.at(Level.INFO).log("EconomyManager shutdown starting... (%d dirty, %d cached)",
                 dirtyPlayers.size(), cache.size());
 
         running = false;
-        logger.at(Level.INFO).log("Interrupting auto-save thread...");
         saveThread.interrupt();
 
-        // Save ALL cached players on shutdown (not just dirty) to ensure nothing is lost
-        // Use SYNC save to avoid executor issues during server shutdown
+        // Save ALL cached players, and WAIT
         if (!cache.isEmpty()) {
-            logger.at(Level.INFO).log("Saving %d player balances...", cache.size());
+            dirtyPlayers.addAll(cache.keySet());
             try {
-                forceSave();
+                saveDirtyPlayersAsync().join();
                 logger.at(Level.INFO).log("Player balances saved successfully");
             } catch (Exception e) {
                 logger.at(Level.SEVERE).log("Error saving player balances: %s", e.getMessage());
@@ -387,29 +344,14 @@ public class FoxEconomyManager implements EconomyManager {
         logger.at(Level.INFO).log("EconomyManager shutdown complete");
     }
 
-    // ========== Storage Access ==========
-
-    /**
-     * Get the storage provider.
-     */
     public PlayerBalanceRepository getStorage() {
         return storage.balances();
     }
 
-    // ========== Performance Optimizations ==========
+    // ========== Leaderboard / Perf ==========
 
-
-    /**
-     * PERF-02: Get leaderboard with caching and rate-limit.
-     * Avoids sorting entire cache on every request.
-     *
-     * @param limit Maximum number of entries to return
-     * @return Sorted list of top players by balance
-     */
     public List<Map.Entry<UUID, PlayerBalanceData>> getLeaderboard(int limit) {
         long now = System.currentTimeMillis();
-
-        // Rebuild if cache is stale or null
         if (cachedLeaderboard == null || now - lastLeaderboardRebuild > LEADERBOARD_CACHE_MS) {
             cachedLeaderboard = cache.entrySet().stream()
                     .sorted((a, b) -> Double.compare(b.getValue().getBalance(), a.getValue().getBalance()))
@@ -417,17 +359,9 @@ public class FoxEconomyManager implements EconomyManager {
                     .collect(Collectors.toList());
             lastLeaderboardRebuild = now;
         }
-
-        // Return requested limit from cache
-        return cachedLeaderboard.stream()
-                .limit(limit)
-                .collect(Collectors.toList());
+        return cachedLeaderboard.stream().limit(limit).collect(Collectors.toList());
     }
 
-    /**
-     * PERF-03: Clean up locks for offline players.
-     * Prevents unbounded growth of playerLocks map.
-     */
     private void cleanupStaleLocks() {
         Set<UUID> onlinePlayers = Universe.get().getPlayers().stream()
                 .map(PlayerRef::getUuid)
@@ -437,7 +371,6 @@ public class FoxEconomyManager implements EconomyManager {
         for (UUID uuid : new HashSet<>(playerLocks.keySet())) {
             if (!onlinePlayers.contains(uuid)) {
                 ReentrantLock lock = playerLocks.get(uuid);
-                // Only remove if not currently held
                 if (lock != null && !lock.isLocked()) {
                     playerLocks.remove(uuid);
                     removed++;
@@ -450,23 +383,13 @@ public class FoxEconomyManager implements EconomyManager {
         }
     }
 
-    /**
-     * Resolve player name for logging purposes.
-     * Falls back to truncated UUID if player is offline.
-     */
     private String resolvePlayerName(UUID uuid) {
         var player = Universe.get().getPlayer(uuid);
-        if (player != null) {
-            return player.getUsername();
-        }
+        if (player != null) return player.getUsername();
         return uuid.toString().substring(0, UUID_PREVIEW_LENGTH) + "...";
     }
 
     public boolean isAvailable() {
         return true;
     }
-
-    // ========== Result Enums ==========
-
-
 }

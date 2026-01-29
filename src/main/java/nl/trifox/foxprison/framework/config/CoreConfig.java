@@ -66,7 +66,7 @@ public class CoreConfig {
     }
 
     public long getAutoSaveInterval() {
-        return 60000; // every minute
+        return 60; // every minute
     }
 
     public boolean isEconomyEnabled() {

@@ -23,4 +23,6 @@ public interface EconomyManager {
     void ensureAccount(UUID uuid);
 
     String getDefaultCurrencyID();
+
+    void shutdown();
 }

@@ -32,4 +32,9 @@ public class SellModule implements FoxModule {
 
         foxPrisonPlugin.getCommandRegistry().registerCommand(new SellAdminCommands(sellConfig, economyModule.getEconomyManager()));
     }
+
+    @Override
+    public void stop() {
+
+    }
 }

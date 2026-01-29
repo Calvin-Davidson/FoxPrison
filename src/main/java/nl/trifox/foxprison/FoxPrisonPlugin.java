@@ -81,6 +81,17 @@ public class FoxPrisonPlugin extends JavaPlugin {
         getLogger().atInfo().log("FoxPrison setup complete.");
     }
 
+    @Override
+    protected void shutdown() {
+        storageModule.stop();
+        economyModule.stop();
+        rankModule.stop();
+        mineModule.stop();
+        sellModule.stop();
+
+        super.shutdown();
+    }
+
     public Config<MinesConfig> getMinesConfig() {
         return minesConfig;
     }

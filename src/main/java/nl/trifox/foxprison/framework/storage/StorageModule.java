@@ -17,6 +17,7 @@ public final class StorageModule implements FoxModule {
         provider.init();
     }
 
+    @Override
     public void stop() {
         provider.close();
     }

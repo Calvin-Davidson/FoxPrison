@@ -32,8 +32,12 @@ public final class MinesModule implements FoxModule {
         registry.registerCommand(new MineCommand(mineService));
         registry.registerCommand(new MineCommands(mineService, ranks));
 
-
         registry.registerCommand(new RankUpCommand(ranks));
+    }
+
+    @Override
+    public void stop() {
+
     }
 
     public MineService getMineService() {

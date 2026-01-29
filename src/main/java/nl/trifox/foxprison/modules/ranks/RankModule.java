@@ -33,6 +33,11 @@ public final class RankModule implements FoxModule {
         plugin.getCommandRegistry().registerCommand(new RankCommand(rankService));
     }
 
+    @Override
+    public void stop() {
+
+    }
+
     public RankService getRankService() {
         return rankService;
     }

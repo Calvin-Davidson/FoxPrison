@@ -272,7 +272,6 @@ public class MineService {
                 1, 1, TimeUnit.SECONDS
         );
 
-        // Important: ensures it’s cancelled automatically when plugin unloads. :contentReference[oaicite:3]{index=3}
         taskRegistry.registerTask(future);
     }
 

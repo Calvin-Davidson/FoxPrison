@@ -42,6 +42,11 @@ public final class EconomyModule implements FoxModule {
         }
     }
 
+    @Override
+    public void stop() {
+        economyManager.shutdown();
+    }
+
     public EconomyManager getEconomyManager() {
         return economyManager;
     }

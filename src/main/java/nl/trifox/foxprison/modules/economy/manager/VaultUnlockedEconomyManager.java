@@ -80,4 +80,9 @@ public class VaultUnlockedEconomyManager implements EconomyManager {
     public String getDefaultCurrencyID() {
         return economy.getDefaultCurrency(pluginName);
     }
+
+    @Override
+    public void shutdown() {
+        // not supported
+    }
 }

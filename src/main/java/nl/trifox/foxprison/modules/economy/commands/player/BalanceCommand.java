@@ -1,4 +1,4 @@
-package nl.trifox.foxprison.modules.economy.commands;
+package nl.trifox.foxprison.modules.economy.commands.player;
 
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
@@ -10,7 +10,6 @@ import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import nl.trifox.foxprison.FoxPrisonPlugin;
-import nl.trifox.foxprison.modules.economy.data.PlayerBalanceData;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;

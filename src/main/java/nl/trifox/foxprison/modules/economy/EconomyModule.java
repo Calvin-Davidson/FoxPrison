@@ -4,8 +4,9 @@ import net.cfh.vault.VaultUnlockedServicesManager;
 import nl.trifox.foxprison.FoxPrisonPlugin;
 import nl.trifox.foxprison.framework.module.FoxModule;
 import nl.trifox.foxprison.framework.storage.StorageModule;
-import nl.trifox.foxprison.modules.economy.commands.BalanceCommand;
+import nl.trifox.foxprison.modules.economy.commands.player.BalanceCommand;
 import nl.trifox.foxprison.modules.economy.commands.admin.EcoAdminCommand;
+import nl.trifox.foxprison.modules.economy.commands.player.PayCommand;
 import nl.trifox.foxprison.modules.economy.manager.FoxEconomyManager;
 import nl.trifox.foxprison.modules.economy.manager.VaultUnlockedEconomyManager;
 
@@ -37,6 +38,7 @@ public final class EconomyModule implements FoxModule {
             var registry = plugin.getCommandRegistry();
             registry.registerCommand(new BalanceCommand());
             registry.registerCommand(new EcoAdminCommand());
+            registry.registerCommand(new PayCommand());
         } else {
             this.economyManager = new VaultUnlockedEconomyManager(VaultUnlockedServicesManager.get().economyObj());
         }

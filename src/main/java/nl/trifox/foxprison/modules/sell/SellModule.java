@@ -14,8 +14,6 @@ public class SellModule implements FoxModule {
     private final EconomyModule economyModule;
     private final SellConfig sellConfig;
 
-    private SellManager sellManager;
-
     public SellModule(FoxPrisonPlugin plugin, EconomyModule economyModule, SellConfig sellConfig)
     {
         this.foxPrisonPlugin = plugin;
@@ -32,6 +30,6 @@ public class SellModule implements FoxModule {
             foxPrisonPlugin.getCommandRegistry().registerCommand(new SellAllCommand(economyModule.getEconomyManager(), sellConfig));
         }
 
-        foxPrisonPlugin.getCommandRegistry().registerCommand(new SellAdminCommands(sellManager));
+        foxPrisonPlugin.getCommandRegistry().registerCommand(new SellAdminCommands(sellConfig));
     }
 }

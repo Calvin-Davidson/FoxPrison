@@ -12,7 +12,8 @@ import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.inventory.Inventory;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.inventory.container.CombinedItemContainer;
-import nl.trifox.foxprison.modules.sell.SellManager;
+import nl.trifox.foxprison.FoxPrisonPlugin;
+import nl.trifox.foxprison.modules.sell.config.SellConfig;
 import nl.trifox.foxprison.modules.sell.config.SellPriceDefinition;
 
 import javax.annotation.Nonnull;
@@ -25,14 +26,14 @@ import java.util.concurrent.CompletableFuture;
  */
 public final class SellAdminCommands extends AbstractCommandCollection {
 
-    public SellAdminCommands(@Nonnull SellManager sellManager) {
+    public SellAdminCommands(@Nonnull SellConfig config) {
         super("selladmin", "Admin: manage /sell prices");
         requirePermission("foxprison.sell.admin");
 
         addAliases("sa");
 
-        addSubCommand(new SetPriceSub(sellManager));
-        addSubCommand(new SumSub(sellManager));
+        addSubCommand(new SetPriceSub(config));
+        addSubCommand(new SumSub(config));
         // You can add more later (getprice, remove, list, reload, etc.)
     }
 
@@ -42,14 +43,14 @@ public final class SellAdminCommands extends AbstractCommandCollection {
     // -------------------------------------------------------------------------
     private static final class SetPriceSub extends AbstractAsyncCommand {
 
-        private final SellManager sell;
+        private final SellConfig sell;
 
         private final RequiredArg<Double> priceArg;
         private final OptionalArg<String> itemArg;
         private final OptionalArg<String> currencyArg;
         private final FlagArg noSaveFlag;
 
-        private SetPriceSub(SellManager sell) {
+        private SetPriceSub(SellConfig sell) {
             super("setprice", "Set sell price for an item (defaults to item in hand)");
             this.sell = Objects.requireNonNull(sell);
 
@@ -89,7 +90,7 @@ public final class SellAdminCommands extends AbstractCommandCollection {
             // Save unless --nosave
             CompletableFuture<Void> saveFuture = noSaveFlag.get(context)
                     ? CompletableFuture.completedFuture(null)
-                    : sell.saveAsync();
+                    : FoxPrisonPlugin.getInstance().getSellConfig().save();
 
             String finalItemId = itemId;
             String finalCurrency = currency;
@@ -110,10 +111,10 @@ public final class SellAdminCommands extends AbstractCommandCollection {
 
     private static final class SumSub extends AbstractAsyncCommand {
 
-        private final SellManager sell;
+        private final SellConfig sell;
         private final OptionalArg<String> scopeArg;
 
-        private SumSub(SellManager sell) {
+        private SumSub(SellConfig sell) {
             super("sum", "Show total sell value (hand or inventory)");
             this.sell = Objects.requireNonNull(sell);
 
@@ -147,7 +148,7 @@ public final class SellAdminCommands extends AbstractCommandCollection {
                     return CompletableFuture.completedFuture(null);
                 }
 
-                SellPriceDefinition def = sell.getPrice(held.getItemId());
+                SellPriceDefinition def = sell.getPriceForItemId(held.getItemId());
                 if (def == null || def.getPriceEach() <= 0.0) {
                     player.sendMessage(Message.raw("No sell price set for " + held.getItemId() + "."));
                     return CompletableFuture.completedFuture(null);
@@ -166,7 +167,7 @@ public final class SellAdminCommands extends AbstractCommandCollection {
             everything.forEach((slot, stack) -> {
                 if (stack == null || stack.isEmpty()) return;
 
-                SellPriceDefinition def = sell.getPrice(stack.getItemId());
+                SellPriceDefinition def = sell.getPriceForItemId(stack.getItemId());
                 if (def == null || def.getPriceEach() <= 0.0) {
                     // no price for this stack
                     // (don’t spam per-stack)
@@ -184,7 +185,7 @@ public final class SellAdminCommands extends AbstractCommandCollection {
                 ItemStack stack = everything.getItemStack(slot);
                 if (stack == null || stack.isEmpty()) continue;
 
-                SellPriceDefinition def = sell.getPrice(stack.getItemId());
+                SellPriceDefinition def = sell.getPriceForItemId(stack.getItemId());
                 if (def == null || def.getPriceEach() <= 0.0) {
                     skippedStacks++;
                     continue;

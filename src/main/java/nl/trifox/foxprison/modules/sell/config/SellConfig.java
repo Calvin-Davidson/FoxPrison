@@ -54,24 +54,20 @@ public final class SellConfig {
 
     public SellConfig() {}
 
-    // ---------- Convenience lookup ----------
     public SellPriceDefinition getPriceForItemId(String itemId) {
         if (itemId == null || itemId.isBlank() || prices.isEmpty()) return null;
 
         return prices.get(itemId);
     }
 
-    // ---------- Getters ----------
     public boolean isEnabled() { return enabled; }
     public boolean isSellEnabled() { return sellEnabled; }
     public boolean isSellAllEnabled() { return sellAllEnabled; }
     public SellAllDefinition getSellAll() { return sellAll; }
     public Map<String, SellPriceDefinition> getPrices() { return prices; }
 
-    // =====================================================================
-    // Nested config blocks
-    // =====================================================================
-
-
+    public void setPrice(String itemId, SellPriceDefinition def) {
+        prices.put(itemId, def);
+    }
 }
 

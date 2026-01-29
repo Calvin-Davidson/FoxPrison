@@ -86,12 +86,7 @@ public class FoxEconomyManager implements EconomyManager {
      * This is called when a player joins the server.
      */
     public void ensureAccount(@Nonnull UUID playerUuid) {
-        cache.computeIfAbsent(playerUuid, uuid -> {
-            // Load from storage or create new
-            PlayerBalanceData balance = storage.balances().getOrCreate(uuid).join();
-            dirtyPlayers.add(uuid); // Mark as dirty to ensure it's saved
-            return balance;
-        });
+        cache.computeIfAbsent(playerUuid, uuid -> storage.balances().getOrCreate(uuid).join());
     }
 
     @Override

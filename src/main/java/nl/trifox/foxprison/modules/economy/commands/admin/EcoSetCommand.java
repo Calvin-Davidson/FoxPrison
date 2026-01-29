@@ -52,9 +52,9 @@ public class EcoSetCommand extends AbstractAsyncCommand {
 
             player.sendMessage(Message.join(
                     Message.raw("Balance set: ").color(Color.GREEN),
-                    Message.raw(FoxPrisonPlugin.getInstance().getCoreConfig().get().format(oldBalance)).color(Color.GRAY),
+                    Message.raw(FoxPrisonPlugin.getInstance().getEconomyConfig().get().format(oldBalance)).color(Color.GRAY),
                     Message.raw(" -> ").color(Color.WHITE),
-                    Message.raw(FoxPrisonPlugin.getInstance().getCoreConfig().get().format(amount)).color(new Color(50, 205, 50))
+                    Message.raw(FoxPrisonPlugin.getInstance().getEconomyConfig().get().format(amount)).color(new Color(50, 205, 50))
             ));
         }, world);
     }

@@ -14,11 +14,11 @@ import java.util.*;
 public class VaultUnlockedEconomy implements Economy {
 
     private final FoxPrisonPlugin plugin = FoxPrisonPlugin.getInstance();
-    private final String defaultCurrency = FoxPrisonPlugin.getInstance().getCoreConfig().get().getDefaultCurrencySymbol();
+    private final String defaultCurrency = FoxPrisonPlugin.getInstance().getEconomyConfig().get().getDefaultCurrency();
 
     @Override
     public boolean isEnabled() {
-        return plugin.getCoreConfig().get().isEconomyEnabled();
+        return plugin.getEconomyConfig().get().isEnabled();
     }
 
     @NotNull

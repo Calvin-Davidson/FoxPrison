@@ -54,9 +54,9 @@ public  class EcoTakeCommand extends AbstractAsyncCommand {
             if (success) {
                 player.sendMessage(Message.join(
                         Message.raw("Removed ").color(Color.YELLOW),
-                        Message.raw("-" + FoxPrisonPlugin.getInstance().getCoreConfig().get().format(amount)).color(new Color(255, 99, 71)),
+                        Message.raw("-" + FoxPrisonPlugin.getInstance().getEconomyConfig().get().format(amount)).color(new Color(255, 99, 71)),
                         Message.raw(" | New balance: ").color(Color.GRAY),
-                        Message.raw(FoxPrisonPlugin.getInstance().getCoreConfig().get().format(newBalance)).color(Color.WHITE)
+                        Message.raw(FoxPrisonPlugin.getInstance().getEconomyConfig().get().format(newBalance)).color(Color.WHITE)
                 ));
             } else {
                 player.sendMessage(Message.raw("Insufficient funds").color(Color.RED));

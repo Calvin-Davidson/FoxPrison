@@ -36,7 +36,7 @@ public class EcoResetCommand extends AbstractAsyncCommand {
             PlayerRef playerRef = store.getComponent(ref, PlayerRef.getComponentType());
             if (playerRef == null) return;
 
-            double startingBalance = FoxPrisonPlugin.getInstance().getCoreConfig().get().getStartingBalance();
+            double startingBalance = FoxPrisonPlugin.getInstance().getEconomyConfig().get().getStartingBalance();
             FoxPrisonPlugin.getEconomyModule().getEconomyManager().setBalance(playerRef.getUuid(), startingBalance, "Admin reset");
 
             player.sendMessage(Message.join(

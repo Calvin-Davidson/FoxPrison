@@ -56,9 +56,9 @@ public class EcoGiveCommand extends AbstractAsyncCommand {
 
             player.sendMessage(Message.join(
                     Message.raw("Added ").color(Color.GREEN),
-                    Message.raw("+" + FoxPrisonPlugin.getInstance().getCoreConfig().get().format(amount)).color(new Color(50, 205, 50)),
+                    Message.raw("+" + FoxPrisonPlugin.getInstance().getEconomyConfig().get().format(amount)).color(new Color(50, 205, 50)),
                     Message.raw(" | New balance: ").color(Color.GRAY),
-                    Message.raw(FoxPrisonPlugin.getInstance().getCoreConfig().get().format(newBalance)).color(Color.WHITE)
+                    Message.raw(FoxPrisonPlugin.getInstance().getEconomyConfig().get().format(newBalance)).color(Color.WHITE)
             ));
         }, world);
     }

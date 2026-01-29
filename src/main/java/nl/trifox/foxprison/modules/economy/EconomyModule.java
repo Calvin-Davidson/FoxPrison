@@ -22,7 +22,7 @@ public final class EconomyModule implements FoxModule {
 
     @Override
     public void start() {
-        if (plugin.getCoreConfig().get().isEconomyEnabled()) {
+        if (plugin.getEconomyConfig().get().isEnabled()) {
 
             // storageModule.start() must have happened before this
             try {

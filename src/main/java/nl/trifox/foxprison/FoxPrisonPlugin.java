@@ -6,6 +6,7 @@ import com.hypixel.hytale.server.core.util.Config;
 
 import nl.trifox.foxprison.framework.storage.StorageModule;
 import nl.trifox.foxprison.modules.economy.EconomyModule;
+import nl.trifox.foxprison.modules.economy.config.EconomyConfig;
 import nl.trifox.foxprison.modules.mines.MinesModule;
 import nl.trifox.foxprison.modules.ranks.RankModule;
 
@@ -29,6 +30,7 @@ public class FoxPrisonPlugin extends JavaPlugin {
     private final Config<RanksConfig> ranksConfig;
     private final Config<MinesConfig> minesConfig;
     private final Config<SellConfig> sellConfig;
+    private final Config<EconomyConfig> economyConfig;
 
     private static FoxPrisonPlugin instance;
 
@@ -40,6 +42,7 @@ public class FoxPrisonPlugin extends JavaPlugin {
         this.ranksConfig = withConfig("Ranks", RanksConfig.CODEC);
         this.minesConfig = withConfig("Mines", MinesConfig.CODEC);
         this.sellConfig = withConfig("Sell", SellConfig.CODEC);
+        this.economyConfig = withConfig("Economy", EconomyConfig.CODEC);
     }
 
     public static FoxPrisonPlugin getInstance() {
@@ -110,5 +113,9 @@ public class FoxPrisonPlugin extends JavaPlugin {
 
     public Config<SellConfig> getSellConfig() {
         return sellConfig;
+    }
+
+    public Config<EconomyConfig> getEconomyConfig() {
+        return economyConfig;
     }
 }

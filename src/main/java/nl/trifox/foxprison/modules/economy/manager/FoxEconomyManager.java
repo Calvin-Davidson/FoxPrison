@@ -155,7 +155,7 @@ public class FoxEconomyManager implements EconomyManager {
         ReentrantLock lock = getLock(playerUuid);
         lock.lock();
         try {
-            PlayerBalanceData balance = cache.get(playerUuid);
+            PlayerBalanceData balance = getOrLoadAccount(playerUuid);
             if (balance == null) return false;
 
             double oldBalance = balance.getBalance();

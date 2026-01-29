@@ -25,7 +25,7 @@ public class PayCommand extends AbstractAsyncPlayerCommand {
     private final RequiredArg<PlayerRef> targetPlayerArg;
 
     public PayCommand() {
-        super("pay balance to a playrer");
+        super("pay", "pay balance to a playrer");
         this.amountArg = this.withRequiredArg("amount", "The amount to remove", ArgTypes.DOUBLE);
         this.targetPlayerArg = this.withRequiredArg("target player", "The player whom will receive this balance", ArgTypes.PLAYER_REF);
     }
@@ -54,16 +54,16 @@ public class PayCommand extends AbstractAsyncPlayerCommand {
         if (transferResult == TransferResult.SUCCESS) {
             playerRef.sendMessage(Message.join(
                     Message.raw("Transfered ").color(Color.YELLOW),
-                    Message.raw("-" + FoxPrisonPlugin.getInstance().getEconomyConfig().get().format(amount)).color(new Color(255, 99, 71)),
+                    Message.raw("-" + FoxPrisonPlugin.getInstance().getEconomyConfig().get().getDefaultCurrency().format(amount)).color(new Color(255, 99, 71)),
                     Message.raw(" | New balance: ").color(Color.GRAY),
-                    Message.raw(FoxPrisonPlugin.getInstance().getEconomyConfig().get().format(newBalance)).color(Color.WHITE)
+                    Message.raw(FoxPrisonPlugin.getInstance().getEconomyConfig().get().getDefaultCurrency().format(newBalance)).color(Color.WHITE)
             ));
 
             targetPlayer.sendMessage(Message.join(
                     Message.raw("Received ").color(Color.YELLOW),
-                    Message.raw("-" + FoxPrisonPlugin.getInstance().getEconomyConfig().get().format(amount)).color(new Color(255, 99, 71)),
+                    Message.raw("-" + FoxPrisonPlugin.getInstance().getEconomyConfig().get().getDefaultCurrency().format(amount)).color(new Color(255, 99, 71)),
                     Message.raw(" | New balance: ").color(Color.GRAY),
-                    Message.raw(FoxPrisonPlugin.getInstance().getEconomyConfig().get().format(newBalance)).color(Color.WHITE)
+                    Message.raw(FoxPrisonPlugin.getInstance().getEconomyConfig().get().getDefaultCurrency().format(newBalance)).color(Color.WHITE)
             ));
         } else {
             playerRef.sendMessage(Message.raw("Insufficient funds").color(Color.RED));

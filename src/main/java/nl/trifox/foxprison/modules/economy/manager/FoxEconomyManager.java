@@ -7,6 +7,7 @@ import nl.trifox.foxprison.FoxPrisonPlugin;
 import nl.trifox.foxprison.framework.storage.StorageProvider;
 import nl.trifox.foxprison.framework.storage.repositories.PlayerBalanceRepository;
 import nl.trifox.foxprison.modules.economy.EconomyManager;
+import nl.trifox.foxprison.modules.economy.config.EconomyConfig;
 import nl.trifox.foxprison.modules.economy.data.PlayerBalanceData;
 import nl.trifox.foxprison.modules.economy.enums.TransferResult;
 
@@ -20,16 +21,8 @@ import java.util.stream.Collectors;
 
 
 import com.google.gson.Gson;
-import com.hypixel.hytale.logger.HytaleLogger;
 
-import javax.annotation.Nonnull;
-import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.ReentrantLock;
-import java.util.logging.Level;
-import java.util.stream.Collectors;
 
 public class FoxEconomyManager implements EconomyManager {
 
@@ -57,10 +50,12 @@ public class FoxEconomyManager implements EconomyManager {
 
     // Used ONLY to deep-copy snapshots for saving (prevents torn writes).
     private final Gson snapshotGson = new Gson();
+    private final EconomyConfig economyConfig;
 
     public FoxEconomyManager(FoxPrisonPlugin plugin, StorageProvider storage) {
         this.logger = HytaleLogger.getLogger().getSubLogger("Ecotale");
         this.storage = storage;
+        this.economyConfig = plugin.getEconomyConfig().get();
 
         this.saveThread = new Thread(this::autoSaveLoop, "Ecotale-AutoSave");
         this.saveThread.setDaemon(true);
@@ -109,7 +104,7 @@ public class FoxEconomyManager implements EconomyManager {
 
     public double getBalance(@Nonnull UUID playerUuid) {
         PlayerBalanceData balance = cache.get(playerUuid);
-        return balance != null ? balance.getBalance() : 0.0;
+        return balance != null ? balance.getBalance(economyConfig.getDefaultCurrencyId()) : 0.0;
     }
 
     public boolean hasBalance(@Nonnull UUID playerUuid, double amount) {
@@ -125,7 +120,7 @@ public class FoxEconomyManager implements EconomyManager {
             PlayerBalanceData balance = getOrLoadAccount(playerUuid);
             if (balance == null) return false;
 
-            boolean ok = balance.deposit(amount, reason);
+            boolean ok = balance.deposit(economyConfig.getDefaultCurrencyId(), amount, reason);
             if (ok) dirtyPlayers.add(playerUuid);
             return ok;
         } finally {
@@ -143,7 +138,7 @@ public class FoxEconomyManager implements EconomyManager {
             PlayerBalanceData balance = getOrLoadAccount(playerUuid);
             if (balance == null) return false;
 
-            boolean ok = balance.withdraw(amount, reason);
+            boolean ok = balance.withdraw(economyConfig.getDefaultCurrencyId(), amount, reason);
             if (ok) dirtyPlayers.add(playerUuid);
             return ok;
         } finally {
@@ -160,7 +155,7 @@ public class FoxEconomyManager implements EconomyManager {
             PlayerBalanceData balance = getOrLoadAccount(playerUuid);
             if (balance == null) return;
 
-            balance.setBalance(amount, reason);
+            balance.setBalance(economyConfig.getDefaultCurrencyId(), amount, reason);
             dirtyPlayers.add(playerUuid);
         } finally {
             lock.unlock();
@@ -188,13 +183,13 @@ public class FoxEconomyManager implements EconomyManager {
                     return TransferResult.FAILED;
                 }
 
-                if (!fromBalance.hasBalance(amount)) {
+                if (!fromBalance.hasBalance(economyConfig.getDefaultCurrencyId(), amount)) {
                     return TransferResult.INSUFFICIENT_FUNDS;
                 }
 
                 // Atomic under both locks
-                fromBalance.withdrawUnsafe(amount, "Transfer to " + to + ": " + reason);
-                toBalance.depositUnsafe(amount, "Transfer from " + from + ": " + reason);
+                fromBalance.withdraw(economyConfig.getDefaultCurrencyId(), amount, "Transfer to " + to + ": " + reason);
+                toBalance.depositUnsafe(economyConfig.getDefaultCurrencyId(), amount, "Transfer from " + from + ": " + reason);
 
                 dirtyPlayers.add(from);
                 dirtyPlayers.add(to);
@@ -354,7 +349,7 @@ public class FoxEconomyManager implements EconomyManager {
         long now = System.currentTimeMillis();
         if (cachedLeaderboard == null || now - lastLeaderboardRebuild > LEADERBOARD_CACHE_MS) {
             cachedLeaderboard = cache.entrySet().stream()
-                    .sorted((a, b) -> Double.compare(b.getValue().getBalance(), a.getValue().getBalance()))
+                    .sorted((a, b) -> Double.compare(b.getValue().getBalance(economyConfig.getDefaultCurrencyId()), a.getValue().getBalance(economyConfig.getDefaultCurrencyId())))
                     .limit(MAX_LEADERBOARD_CACHE_SIZE)
                     .collect(Collectors.toList());
             lastLeaderboardRebuild = now;

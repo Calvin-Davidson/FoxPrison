@@ -34,7 +34,7 @@ public class BalanceCommand extends AbstractAsyncPlayerCommand {
                 playerRef.sendMessage(Message.raw("----- Your Balance -----").color(new Color(255, 215, 0)));
                 playerRef.sendMessage(Message.join(
                         Message.raw("  Balance: ").color(Color.GRAY),
-                        Message.raw(FoxPrisonPlugin.getInstance().getEconomyConfig().get().format(balance)).color(new Color(50, 205, 50)).bold(true)
+                        Message.raw(FoxPrisonPlugin.getInstance().getEconomyConfig().get().getDefaultCurrency().format(balance)).color(new Color(50, 205, 50)).bold(true)
                 ));
 
             });

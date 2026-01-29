@@ -4,156 +4,209 @@ import com.hypixel.hytale.codec.Codec;
 import com.hypixel.hytale.codec.KeyedCodec;
 import com.hypixel.hytale.codec.builder.BuilderCodec;
 import com.hypixel.hytale.codec.codecs.array.ArrayCodec;
+import nl.trifox.foxprison.modules.economy.config.CurrencyDefinition;
+import nl.trifox.foxprison.modules.economy.config.EconomyConfig;
 
+import java.util.Arrays;
+import java.util.Objects;
 import java.util.UUID;
 
-/**
- * Player balance data model with security improvements.
- * <p>
- * Security fixes implemented:
- * - SEC-02: MaxBalance validation in deposit() - rejects if exceeded
- * - Internal methods for atomic operations (package-private)
- * <p>
- * NOTE: BuilderCodec keys MUST start with uppercase (PascalCase)
- */
-public  class PlayerBalanceData {
+public class PlayerBalanceData {
 
-    public static final BuilderCodec<PlayerBalanceData> CODEC = BuilderCodec.builder(PlayerBalanceData.class, PlayerBalanceData::new)
-            .append(new KeyedCodec<>("Uuid", Codec.STRING),
-                    (p, v, extraInfo) -> p.playerUuid = UUID.fromString(v),
-                    (p, extraInfo) -> p.playerUuid.toString()).add()
-            .append(new KeyedCodec<>("Balance", Codec.DOUBLE),
-                    (p, v, extraInfo) -> p.balance = v,
-                    (p, extraInfo) -> p.balance).add()
-            .append(new KeyedCodec<>("TotalEarned", Codec.DOUBLE),
-                    (p, v, extraInfo) -> p.totalEarned = v,
-                    (p, extraInfo) -> p.totalEarned).add()
-            .append(new KeyedCodec<>("TotalSpent", Codec.DOUBLE),
-                    (p, v, extraInfo) -> p.totalSpent = v,
-                    (p, extraInfo) -> p.totalSpent).add()
-            .append(new KeyedCodec<>("LastTransaction", Codec.STRING),
-                    (p, v, extraInfo) -> p.lastTransaction = v,
-                    (p, extraInfo) -> p.lastTransaction).add()
-            .append(new KeyedCodec<>("LastTransactionTime", Codec.LONG),
-                    (p, v, extraInfo) -> p.lastTransactionTime = v,
-                    (p, extraInfo) -> p.lastTransactionTime).add()
-            .build();
-
-    public static final ArrayCodec<PlayerBalanceData> ARRAY_CODEC = new ArrayCodec<>(CODEC, PlayerBalanceData[]::new, PlayerBalanceData::new);
+    public static final BuilderCodec<PlayerBalanceData> CODEC =
+            BuilderCodec.builder(PlayerBalanceData.class, PlayerBalanceData::new)
+                    .append(new KeyedCodec<>("Uuid", Codec.STRING),
+                            (p, v, i) -> p.playerUuid = UUID.fromString(v),
+                            (p, i) -> p.playerUuid.toString())
+                    .add()
+                    .append(new KeyedCodec<>("Wallets", CurrencyWallet.ARRAY_CODEC),
+                            (p, v, i) -> p.wallets = (v == null ? new CurrencyWallet[0] : v),
+                            (p, i) -> p.wallets)
+                    .add()
+                    .build();
 
     private UUID playerUuid;
-    private double balance = 0;
-    private double totalEarned = 0;
-    private double totalSpent = 0;
-    private String lastTransaction = "";
-    private long lastTransactionTime = 0;
+    private CurrencyWallet[] wallets = new CurrencyWallet[0];
 
-    public PlayerBalanceData() {
-    }
+    public PlayerBalanceData() {}
 
     public PlayerBalanceData(UUID playerUuid) {
         this.playerUuid = playerUuid;
     }
 
-    /**
-     * Deposit money into this account.
-     * <p>
-     * Security: Rejects transaction if it would exceed maxBalance.
-     * This prevents economy inflation exploits.
-     *
-     * @param amount Amount to deposit (must be positive)
-     * @param reason Reason for the transaction (for logging)
-     * @return true if successful, false if rejected (invalid amount or max exceeded)
-     */
-    public boolean deposit(double amount, String reason) {
-        if (amount <= 0) return false;
+    public UUID getPlayerUuid() { return playerUuid; }
 
-        this.balance += amount;
-        this.totalEarned += amount;
-        this.lastTransaction = "+" + amount + " (" + reason + ")";
-        this.lastTransactionTime = System.currentTimeMillis();
-        return true;
+    public CurrencyWallet[] getWallets() {
+        return wallets == null ? new CurrencyWallet[0] : wallets;
     }
 
-    /**
-     * Withdraw money from this account.
-     *
-     * @param amount Amount to withdraw (must be positive and <= balance)
-     * @param reason Reason for the transaction
-     * @return true if successful, false if insufficient funds
-     */
-    public boolean withdraw(double amount, String reason) {
-        if (amount <= 0 || this.balance < amount) return false;
-        this.balance -= amount;
-        this.totalSpent += amount;
-        this.lastTransaction = "-" + amount + " (" + reason + ")";
-        this.lastTransactionTime = System.currentTimeMillis();
-        return true;
+    public void setPlayerUuidIfMissing(UUID uuid) {
+        if (this.playerUuid == null) this.playerUuid = uuid;
     }
 
-    /**
-     * Set balance to a specific amount (admin operations).
-     * Enforces minimum of 0 but allows bypassing maxBalance for admin use.
-     */
-    public void setBalance(double amount, String reason) {
-        this.balance = Math.max(0, amount);
-        this.lastTransaction = "Set to " + amount + " (" + reason + ")";
-        this.lastTransactionTime = System.currentTimeMillis();
+    public void ensureWallets(EconomyConfig cfg) {
+        Objects.requireNonNull(cfg, "cfg");
+
+        for (String id : cfg.getCurrencyIds()) {
+            CurrencyWallet w = findWallet(id);
+            if (w == null) {
+                CurrencyWallet created = new CurrencyWallet(id);
+                created.setBalance(cfg.getCurrency(id).getDecimalPlaces(), "Starting balance");
+                addWallet(created);
+            }
+        }
     }
 
-    // ========== Internal Methods (Package-Private) ==========
-    // These are called ONLY from EconomyManager with locks held.
-    // They bypass validation because the caller already verified.
-
-    /**
-     * Internal deposit - NO validation.
-     * ONLY call from EconomyManager.transfer() with lock held.
-     */
-    public void depositUnsafe(double amount, String reason) {
-        this.balance += amount;
-        this.totalEarned += amount;
-        this.lastTransaction = "+" + amount + " (" + reason + ")";
-        this.lastTransactionTime = System.currentTimeMillis();
+    public double getBalance(String currencyId) {
+        CurrencyWallet w = wallet(currencyId);
+        return w.getBalance();
     }
 
-    /**
-     * Internal withdraw - NO validation.
-     * ONLY call from EconomyManager.transfer() with lock held.
-     */
-    public void withdrawUnsafe(double amount, String reason) {
-        this.balance -= amount;
-        this.totalSpent += amount;
-        this.lastTransaction = "-" + amount + " (" + reason + ")";
-        this.lastTransactionTime = System.currentTimeMillis();
+    public boolean hasBalance(String currencyId, double amount) {
+        return wallet(currencyId).hasBalance(amount);
     }
 
-    // ========== Getters ==========
-
-    public UUID getPlayerUuid() {
-        return playerUuid;
+    public boolean deposit(String currencyId, double amount, String reason) {
+        return wallet(currencyId).deposit(amount, reason);
     }
 
-    public double getBalance() {
-        return balance;
+    public boolean withdraw(String currencyId, double amount, String reason) {
+        return wallet(currencyId).withdraw(amount, reason);
     }
 
-    public double getTotalEarned() {
-        return totalEarned;
+    public void depositUnsafe(String currencyId, double amount, String reason) {
+        wallet(currencyId).depositUnsafe(amount, reason);
     }
 
-    public double getTotalSpent() {
-        return totalSpent;
+    public void withdrawUnsafe(String currencyId, double amount, String reason) {
+         wallet(currencyId).withdrawUnsafe(amount, reason);
     }
 
-    public String getLastTransaction() {
-        return lastTransaction;
+
+    public void setBalance(String currencyId, double amount, String reason) {
+        wallet(currencyId).setBalance(amount, reason);
     }
 
-    public long getLastTransactionTime() {
-        return lastTransactionTime;
+    // ===== Internals =====
+
+    private CurrencyWallet wallet(String currencyId) {
+        CurrencyWallet existing = findWallet(currencyId);
+        if (existing != null) return existing;
+
+        CurrencyWallet created = new CurrencyWallet(currencyId);
+        addWallet(created);
+        return created;
     }
 
-    public boolean hasBalance(double amount) {
-        return this.balance >= amount;
+    private CurrencyWallet findWallet(String currencyId) {
+        if (wallets == null || wallets.length == 0) return null;
+        for (CurrencyWallet w : wallets) {
+            if (w != null && CurrencyDefinition.normalize(w.getCurrencyId()).equals(currencyId)) {
+                return w;
+            }
+        }
+        return null;
+    }
+
+    private void addWallet(CurrencyWallet w) {
+        if (wallets == null) wallets = new CurrencyWallet[0];
+        CurrencyWallet[] newArr = Arrays.copyOf(wallets, wallets.length + 1);
+        newArr[newArr.length - 1] = w;
+        wallets = newArr;
+    }
+
+    public static final class CurrencyWallet {
+
+        public static final BuilderCodec<CurrencyWallet> CODEC =
+                BuilderCodec.builder(CurrencyWallet.class, CurrencyWallet::new)
+                        .append(new KeyedCodec<>("CurrencyId", Codec.STRING),
+                                (w, v, i) -> w.currencyId = CurrencyDefinition.normalize(v),
+                                (w, i) -> w.currencyId)
+                        .add()
+                        .append(new KeyedCodec<>("Balance", Codec.DOUBLE),
+                                (w, v, i) -> w.balance = v,
+                                (w, i) -> w.balance)
+                        .add()
+                        .append(new KeyedCodec<>("TotalEarned", Codec.DOUBLE),
+                                (w, v, i) -> w.totalEarned = v,
+                                (w, i) -> w.totalEarned)
+                        .add()
+                        .append(new KeyedCodec<>("TotalSpent", Codec.DOUBLE),
+                                (w, v, i) -> w.totalSpent = v,
+                                (w, i) -> w.totalSpent)
+                        .add()
+                        .append(new KeyedCodec<>("LastTransaction", Codec.STRING),
+                                (w, v, i) -> w.lastTransaction = v,
+                                (w, i) -> w.lastTransaction)
+                        .add()
+                        .append(new KeyedCodec<>("LastTransactionTime", Codec.LONG),
+                                (w, v, i) -> w.lastTransactionTime = v,
+                                (w, i) -> w.lastTransactionTime)
+                        .add()
+                        .build();
+
+        public static final Codec<CurrencyWallet[]> ARRAY_CODEC =
+                new ArrayCodec<>(CODEC, CurrencyWallet[]::new, CurrencyWallet::new);
+
+        private String currencyId = "money";
+        private double balance = 0;
+        private double totalEarned = 0;
+        private double totalSpent = 0;
+        private String lastTransaction = "";
+        private long lastTransactionTime = 0;
+
+        public CurrencyWallet() {}
+
+        public CurrencyWallet(String currencyId) {
+            this.currencyId = CurrencyDefinition.normalize(currencyId);
+        }
+
+        public String getCurrencyId() { return currencyId; }
+        public double getBalance() { return balance; }
+        public double getTotalEarned() { return totalEarned; }
+        public double getTotalSpent() { return totalSpent; }
+        public String getLastTransaction() { return lastTransaction; }
+        public long getLastTransactionTime() { return lastTransactionTime; }
+
+        public boolean hasBalance(double amount) { return balance >= amount; }
+
+        public boolean deposit(double amount, String reason) {
+            if (amount <= 0) return false;
+            balance += amount;
+            totalEarned += amount;
+            lastTransaction = "+" + amount + " (" + reason + ")";
+            lastTransactionTime = System.currentTimeMillis();
+            return true;
+        }
+
+        public boolean withdraw(double amount, String reason) {
+            if (amount <= 0 || balance < amount) return false;
+            balance -= amount;
+            totalSpent += amount;
+            lastTransaction = "-" + amount + " (" + reason + ")";
+            lastTransactionTime = System.currentTimeMillis();
+            return true;
+        }
+
+        public void setBalance(double amount, String reason) {
+            balance = Math.max(0, amount);
+            lastTransaction = "Set to " + amount + " (" + reason + ")";
+            lastTransactionTime = System.currentTimeMillis();
+        }
+
+        // Unsafe variants if you need them later
+        public void depositUnsafe(double amount, String reason) {
+            balance += amount;
+            totalEarned += amount;
+            lastTransaction = "+" + amount + " (" + reason + ")";
+            lastTransactionTime = System.currentTimeMillis();
+        }
+
+        public void withdrawUnsafe(double amount, String reason) {
+            balance -= amount;
+            totalSpent += amount;
+            lastTransaction = "-" + amount + " (" + reason + ")";
+            lastTransactionTime = System.currentTimeMillis();
+        }
     }
 }

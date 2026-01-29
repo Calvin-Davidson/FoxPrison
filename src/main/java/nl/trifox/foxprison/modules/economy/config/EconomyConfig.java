@@ -3,13 +3,15 @@ package nl.trifox.foxprison.modules.economy.config;
 import com.hypixel.hytale.codec.Codec;
 import com.hypixel.hytale.codec.KeyedCodec;
 import com.hypixel.hytale.codec.builder.BuilderCodec;
-import nl.trifox.foxprison.framework.config.CoreConfig;
+import com.hypixel.hytale.codec.codecs.array.ArrayCodec;
 
-import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public final class EconomyConfig {
+    public static final Codec<CurrencyDefinition[]> CURRENCIES_ARRAY_CODEC = new ArrayCodec<>(CurrencyDefinition.CODEC, CurrencyDefinition[]::new, CurrencyDefinition::new);
+
+    private static final CurrencyDefinition DEFAULT_CURRENCY = new CurrencyDefinition() {
+    };
 
     public static final BuilderCodec<EconomyConfig> CODEC =
             BuilderCodec.builder(EconomyConfig.class, EconomyConfig::new)
@@ -17,60 +19,55 @@ public final class EconomyConfig {
                             (c, v, i) -> c.enabled = v,
                             (c, i) -> c.enabled)
                     .add()
-                    .append(new KeyedCodec<String>("DefaultCurrencySymbol", Codec.STRING),
+                    .append(new KeyedCodec<String>("DefaultCurrency", Codec.STRING),
                             (c, v, i) -> c.defaultCurrency = v,
                             (c, i) -> c.defaultCurrency)
                     .add()
-                    .append(new KeyedCodec<Double>("StartingBalance", Codec.DOUBLE),
-                            (c, v, i) -> c.startingBalance = v,
-                            (c, i) -> c.startingBalance)
-                    .add()
-                    .append(new KeyedCodec<Integer>("CurrencyDecimalPlaces", Codec.INTEGER),
-                            (c, v, i) -> c.decimalPlaces = v,
-                            (c, i) -> c.decimalPlaces)
+                    .append(new KeyedCodec<>("Currencies", CURRENCIES_ARRAY_CODEC),
+                            (c, v, i) -> c.currencies = (v == null ? new CurrencyDefinition[0] : v),
+                            (c, i) -> c.currencies)
                     .add()
                     .build();
 
     private boolean enabled = true;
+    private CurrencyDefinition[] currencies = new CurrencyDefinition[0];
+    private String defaultCurrency = "money";
 
-
-    private final List<CurrencyDefinition> currencies = new ArrayList<>();
-    private String defaultCurrency = "";
-    private double startingBalance;
-    private int decimalPlaces;
-
-
-    public boolean isEnabled() { return enabled; }
-    public String getDefaultCurrency() { return defaultCurrency; }
-    public List<CurrencyDefinition> getCurrencies() { return currencies; }
-
-
-    public String format(double amount) {
-        StringBuilder pattern = new StringBuilder("#,##0");
-        if (decimalPlaces > 0) {
-            pattern.append(".");
-            pattern.append("0".repeat(decimalPlaces));
-        }
-        DecimalFormat df = new DecimalFormat(pattern.toString());
-        return defaultCurrency + df.format(amount);
+    public boolean isEnabled() {
+        return enabled;
     }
 
-    /**
-     * Format amount in compact form (e.g., "$1.2M", "$500K")
-     */
-    public String formatShort(double amount) {
-        if (amount >= 1_000_000_000) {
-            return defaultCurrency + String.format("%.1fB", amount / 1_000_000_000);
-        } else if (amount >= 1_000_000) {
-            return defaultCurrency + String.format("%.1fM", amount / 1_000_000);
-        } else if (amount >= 10_000) {
-            return defaultCurrency + String.format("%.1fK", amount / 1_000);
-        }
-        // Under 10K: show as whole number for cleaner HUD display
-        return defaultCurrency + Math.round(amount);
+    public String getDefaultCurrencyId() {
+        return defaultCurrency;
     }
 
-    public double getStartingBalance() {
-        return startingBalance;
+    public CurrencyDefinition[] getCurrencies() {
+        if (currencies == null || currencies.length == 0) {
+            return new CurrencyDefinition[] {DEFAULT_CURRENCY};
+        }
+        return currencies;
+    }
+
+    public CurrencyDefinition getDefaultCurrency() {
+        if (currencies == null || currencies.length == 0) {
+            currencies = new CurrencyDefinition[] { DEFAULT_CURRENCY };
+        }
+
+        return getCurrency(getDefaultCurrencyId());
+    }
+
+    public CurrencyDefinition getCurrency(String currencyId) {
+        if (currencies == null || currencies.length == 0) {
+            currencies = new CurrencyDefinition[] { DEFAULT_CURRENCY };
+        }
+        return Arrays.stream(currencies).filter(currencyDefinition -> currencyDefinition.getId().equalsIgnoreCase(CurrencyDefinition.normalize(currencyId))).findFirst().orElseThrow();
+    }
+
+    public Set<String> getCurrencyIds() {
+        Set<String> ids = new LinkedHashSet<>();
+        for (CurrencyDefinition c : currencies) {
+            if (c != null) ids.add(c.getId());
+        }
+        return ids;
     }
 }

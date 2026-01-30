@@ -5,6 +5,7 @@ import com.hypixel.hytale.component.CommandBuffer;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.component.query.Query;
 import com.hypixel.hytale.component.system.EntityEventSystem;
+import com.hypixel.hytale.protocol.GameMode;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.event.events.ecs.BreakBlockEvent;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
@@ -36,10 +37,19 @@ public class MineBlockBreakEvent extends EntityEventSystem<EntityStore, BreakBlo
         var world = player.getWorld();
         if (world == null) return;
 
+        boolean preventBlockBreaking = false;
+        boolean isBlockInMine = false;
         // Find mine(s) in that world whose region contains pos
         for (var mine : mineService.getAllMines()) {
             if (!mine.getWorld().equalsIgnoreCase(world.getName())) continue;
+
+            if (mine.isPreventBlockBreakingOutsideMineInWorld()) {
+                preventBlockBreaking = true;
+            }
+
             if (!mine.getRegion().contains(pos.x, pos.y, pos.z)) continue;
+
+            isBlockInMine = true;
 
             AutoResetDefinition ar = mine.getAutoReset();
             if (ar == null || !ar.isEnabled()) return;
@@ -50,10 +60,15 @@ public class MineBlockBreakEvent extends EntityEventSystem<EntityStore, BreakBlo
             MineRuntimeState st = mineService.getState(mine.getId());
             int broken = st.brokenBlocks.incrementAndGet();
 
+
             if (broken >= threshold) {
                 mineService.triggerResetIfAllowed(mine.getId(), System.currentTimeMillis(), "blocks-broken");
             }
-            return;
+            break;
+        }
+
+        if (preventBlockBreaking && !isBlockInMine && player.getGameMode() == GameMode.Adventure) {
+            breakBlockEvent.setCancelled(true);
         }
     }
 

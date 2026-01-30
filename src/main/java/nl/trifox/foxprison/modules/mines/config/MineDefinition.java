@@ -43,6 +43,10 @@ public class MineDefinition {
                             MineDefinition::setRequirements,
                             MineDefinition::getRequirements)
                     .add()
+                    .append(new KeyedCodec<Boolean>("DisableBreakingBlocksOutsideMine", Codec.BOOLEAN),
+                            (c, v, i) -> c.preventBlockBreakingOutsideMineInWorld = v,
+                            (c, i) -> c.preventBlockBreakingOutsideMineInWorld)
+                    .add()
                     .build();
 
     private String id = "a";
@@ -55,6 +59,7 @@ public class MineDefinition {
     private AutoResetDefinition autoReset = new AutoResetDefinition();
     private BlockPattern blocks;
     private MineRequirementsDefinition requirements = new MineRequirementsDefinition();
+    private boolean preventBlockBreakingOutsideMineInWorld;
 
     public MineDefinition() {
     }
@@ -142,5 +147,9 @@ public class MineDefinition {
 
     public void setRequirements(MineRequirementsDefinition requirements) {
         this.requirements = requirements;
+    }
+
+    public boolean isPreventBlockBreakingOutsideMineInWorld() {
+        return preventBlockBreakingOutsideMineInWorld;
     }
 }

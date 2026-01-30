@@ -43,7 +43,7 @@ public class MineBlockBreakEvent extends EntityEventSystem<EntityStore, BreakBlo
         for (var mine : mineService.getAllMines()) {
             if (!mine.getWorld().equalsIgnoreCase(world.getName())) continue;
 
-            if (mine.isPreventBlockBreakingOutsideMineInWorld()) {
+            if (mine.getMineProtectionDefinition().isPreventBlockBreakingOutsideMineInWorld()) {
                 preventBlockBreaking = true;
             }
 

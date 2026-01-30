@@ -5,6 +5,7 @@ import com.hypixel.hytale.server.core.command.system.CommandSender;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.util.Config;
 import nl.trifox.foxprison.framework.storage.repositories.PlayerRankRepository;
+import nl.trifox.foxprison.modules.ranks.config.CurrencyCostDefinition;
 import nl.trifox.foxprison.modules.ranks.data.PlayerRankData;
 import nl.trifox.foxprison.modules.economy.EconomyManager;
 import nl.trifox.foxprison.modules.ranks.config.RankDefinition;
@@ -44,17 +45,21 @@ public class RankService
                 return CompletableFuture.completedFuture(false);
             }
 
-            RankDefinition next = all[idx + 1];
-            double cost = next.getCost();
-
             if (!economy.isAvailable()) {
                 player.sendMessage(Message.raw("Economy not available."));
                 return CompletableFuture.completedFuture(false);
             }
 
-            if (!economy.withdraw(uuid, cost, "rankup")) {
-                player.sendMessage(Message.raw("Not enough money to rank up. Need: " + cost));
-                return CompletableFuture.completedFuture(false);
+            RankDefinition next = all[idx + 1];
+            var currencyCosts = next.getCosts().getCurrency();
+            for (CurrencyCostDefinition currencyCost : currencyCosts) {
+                if (!economy.hasBalance(player.getUuid(), currencyCost.getAmount(), currencyCost.getCurrencyId())) {
+                    player.sendMessage(Message.raw("Not enough " + currencyCost.getCurrencyId() + " to rank up. Need: " + currencyCost.getAmount()));
+                }
+            }
+
+            for (CurrencyCostDefinition currencyCost : currencyCosts) {
+                economy.withdraw(player.getUuid(), currencyCost.getAmount(), currencyCost.getCurrencyId());
             }
 
             data.setRankId(next.getId());

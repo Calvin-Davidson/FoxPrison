@@ -16,6 +16,15 @@ public interface EconomyManager {
 
     TransferResult transfer(@Nonnull UUID from, @Nonnull UUID to, double amount, String reason);
 
+    double getBalance(@Nonnull UUID playerUuid, String Currency);
+    boolean hasBalance(@Nonnull UUID playerUuid, double amount, String Currency);
+    boolean deposit(@Nonnull UUID playerUuid, double amount, String reason, String Currency);
+    boolean withdraw(@Nonnull UUID playerUuid, double amount, String reason, String Currency);
+    void setBalance(@Nonnull UUID playerUuid, double amount, String reason, String Currency);
+
+    TransferResult transfer(@Nonnull UUID from, @Nonnull UUID to, double amount, String reason, String Currency);
+
+
     boolean isAvailable();
 
     void forceSave();

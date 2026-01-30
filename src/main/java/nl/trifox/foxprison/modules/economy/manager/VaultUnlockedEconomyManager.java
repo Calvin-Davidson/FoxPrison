@@ -60,6 +60,36 @@ public class VaultUnlockedEconomyManager implements EconomyManager {
     }
 
     @Override
+    public double getBalance(@NotNull UUID playerUuid, String currency) {
+        return economy.balance(pluginName, playerUuid, "", currency).doubleValue();
+    }
+
+    @Override
+    public boolean hasBalance(@NotNull UUID playerUuid, double amount, String currency) {
+        return getBalance(playerUuid, currency) >= amount;
+    }
+
+    @Override
+    public boolean deposit(@NotNull UUID playerUuid, double amount, String reason, String currency) {
+        return economy.deposit(pluginName, playerUuid, "", currency, BigDecimal.valueOf(amount)).transactionSuccess();
+    }
+
+    @Override
+    public boolean withdraw(@NotNull UUID playerUuid, double amount, String reason, String currency) {
+        return economy.withdraw(pluginName, playerUuid, "", currency, BigDecimal.valueOf(amount)).transactionSuccess();
+    }
+
+    @Override
+    public void setBalance(@NotNull UUID playerUuid, double amount, String reason, String currency) {
+        economy.set(pluginName, playerUuid, "", currency, BigDecimal.valueOf(amount)).transactionSuccess();
+    }
+
+    @Override
+    public TransferResult transfer(@NotNull UUID from, @NotNull UUID to, double amount, String reason, String currency) {
+        return null;
+    }
+
+    @Override
     public boolean isAvailable() {
         return economy != null;
     }

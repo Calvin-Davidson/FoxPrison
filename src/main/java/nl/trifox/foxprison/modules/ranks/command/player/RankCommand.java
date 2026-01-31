@@ -1,4 +1,4 @@
-package nl.trifox.foxprison.modules.ranks.commands.player;
+package nl.trifox.foxprison.modules.ranks.command.player;
 
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
@@ -9,8 +9,8 @@ import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import nl.trifox.foxprison.modules.ranks.RankService;
-import nl.trifox.foxprison.modules.ranks.commands.admin.RankListCommand;
-import nl.trifox.foxprison.modules.ranks.commands.admin.RankSetCommand;
+import nl.trifox.foxprison.modules.ranks.command.admin.RankListCommand;
+import nl.trifox.foxprison.modules.ranks.command.admin.RankSetCommand;
 import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 
 import java.util.concurrent.CompletableFuture;
@@ -28,7 +28,7 @@ public class RankCommand extends AbstractAsyncPlayerCommand {
     @NonNullDecl
     @Override
     protected CompletableFuture<Void> executeAsync(@NonNullDecl CommandContext commandContext, @NonNullDecl Store<EntityStore> store, @NonNullDecl Ref<EntityStore> ref, @NonNullDecl PlayerRef playerRef, @NonNullDecl World world) {
-        return service.getRankIdByPlayer(playerRef.getUuid()).thenCompose(rankID -> {
+        return service.getRankID(playerRef.getUuid()).thenCompose(rankID -> {
             var optionalRank = service.getRank(rankID);
             if (optionalRank.isEmpty()) {
                 playerRef.sendMessage(Message.raw("your rank does no longer exist"));

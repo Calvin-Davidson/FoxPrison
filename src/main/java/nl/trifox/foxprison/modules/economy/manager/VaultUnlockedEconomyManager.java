@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.math.BigDecimal;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 public class VaultUnlockedEconomyManager implements EconomyManager {
 
@@ -114,5 +115,11 @@ public class VaultUnlockedEconomyManager implements EconomyManager {
     @Override
     public void shutdown() {
         // not supported
+    }
+
+    @Override
+    public CompletableFuture<Void> ensureAccountAsync(UUID uuid) {
+        ensureAccount(uuid); // no async needed
+        return CompletableFuture.completedFuture(null);
     }
 }

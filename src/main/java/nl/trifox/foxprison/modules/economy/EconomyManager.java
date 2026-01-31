@@ -5,6 +5,7 @@ import nl.trifox.foxprison.modules.economy.enums.TransferResult;
 
 import javax.annotation.Nonnull;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 public interface EconomyManager {
 
@@ -34,4 +35,6 @@ public interface EconomyManager {
     String getDefaultCurrencyID();
 
     void shutdown();
+
+    CompletableFuture<Void> ensureAccountAsync(UUID uuid);
 }

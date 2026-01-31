@@ -16,18 +16,29 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.IntStream;
 
 public final class RankService implements PlayerRankService {
 
-    private final PlayerRankRepository store;
-    private final EconomyManager economy;
-    private final Config<RanksConfig> ranks;
+    private final PlayerRankRepository repository;
+    private final EconomyManager economyManager;
+    private final Config<RanksConfig> ranksConfig;
+
+    private ConcurrentHashMap<UUID, PlayerRankData> cache;
 
     public RankService(PlayerRankRepository store, EconomyManager economy, Config<RanksConfig> ranks) {
-        this.store = store;
-        this.economy = economy;
-        this.ranks = ranks;
+        this.repository = store;
+        this.economyManager = economy;
+        this.ranksConfig = ranks;
+        this.cache = new ConcurrentHashMap<>();
+    }
+
+    public CompletableFuture<Boolean> setupPlayer(UUID playerUuid) {
+        return repository.getOrCreate(playerUuid).thenApply(playerRankData -> {
+            cache.put(playerUuid, playerRankData);
+            return true;
+        });
     }
 
     /* =========================================================
@@ -35,15 +46,15 @@ public final class RankService implements PlayerRankService {
        ========================================================= */
 
     public RankDefinition[] getAllRanks() {
-        return ranks.get().getRanks();
+        return ranksConfig.get().getRanks();
     }
 
     public Optional<RankDefinition> getRank(String rankId) {
-        return ranks.get().getRank(rankId);
+        return ranksConfig.get().getRank(rankId);
     }
 
     public int indexOfRank(String rankId) {
-        RankDefinition[] all = ranks.get().getRanks();
+        RankDefinition[] all = ranksConfig.get().getRanks();
         return indexOfRank(all, rankId);
     }
 
@@ -62,29 +73,27 @@ public final class RankService implements PlayerRankService {
        ASYNC (I/O): player rank data
        ========================================================= */
 
-    public CompletableFuture<String> getRankIdByPlayer(UUID playerUuid) {
-        return store.getOrCreate(playerUuid).thenApply(PlayerRankData::getRankId);
-    }
 
     public CompletableFuture<Integer> getRankIndex(UUID playerUuid) {
-        final RankDefinition[] all = ranks.get().getRanks();
-        return getRankIdByPlayer(playerUuid).thenApply(rankId -> indexOfRank(all, rankId));
+        final RankDefinition[] all = ranksConfig.get().getRanks();
+        return getRankID(playerUuid).thenApply(rankId -> indexOfRank(all, rankId));
     }
 
     @Override
     public CompletableFuture<String> getRankID(UUID playerId) {
-        return store.getOrCreate(playerId).thenApply(PlayerRankData::getRankId);
+        if (cache.containsKey(playerId)) return CompletableFuture.completedFuture(cache.get(playerId).getRankId());
+        return repository.getOrCreate(playerId).thenApply(PlayerRankData::getRankId);
     }
 
     public CompletableFuture<Boolean> hasRank(UUID playerUuid, String requiredRankId) {
-        final RankDefinition[] all = ranks.get().getRanks();
+        final RankDefinition[] all = ranksConfig.get().getRanks();
         final int requiredIdx = indexOfRank(all, requiredRankId);
         if (requiredIdx < 0) {
             // If the required rank doesn't exist, treat as not allowed.
             return CompletableFuture.completedFuture(false);
         }
 
-        return getRankIdByPlayer(playerUuid)
+        return getRankID(playerUuid)
                 .thenApply(currentRankId -> indexOfRank(all, currentRankId) >= requiredIdx);
     }
 
@@ -95,7 +104,7 @@ public final class RankService implements PlayerRankService {
     public CompletableFuture<Boolean> setRankByName(CommandSender sender, PlayerRef player, String rankId) {
         UUID uuid = player.getUuid();
 
-        var optionalRank = ranks.get().getRank(rankId);
+        var optionalRank = ranksConfig.get().getRank(rankId);
         if (optionalRank.isEmpty()) {
             sender.sendMessage(Message.raw("Rank " + rankId + " does not exist!"));
             return CompletableFuture.completedFuture(false);
@@ -103,7 +112,7 @@ public final class RankService implements PlayerRankService {
 
         String normalized = optionalRank.get().getId();
 
-        return store.update(uuid, data -> {
+        return repository.update(uuid, data -> {
             data.setRankId(normalized);
             return data;
         }).thenApply(updated -> {
@@ -114,15 +123,15 @@ public final class RankService implements PlayerRankService {
 
     public CompletableFuture<Boolean> rankup(PlayerRef player) {
         UUID uuid = player.getUuid();
-        RankDefinition[] all = ranks.get().getRanks();
+        RankDefinition[] all = ranksConfig.get().getRanks();
 
-        if (!economy.isAvailable()) {
+        if (!economyManager.isAvailable()) {
             player.sendMessage(Message.raw("Economy not available."));
             return CompletableFuture.completedFuture(false);
         }
 
         // Do "load -> validate -> mutate -> persist" as one update operation.
-        return store.update(uuid, data -> {
+        return repository.update(uuid, data -> {
             int idx = indexOfRank(all, data.getRankId());
             if (idx < 0 || idx + 1 >= all.length) {
                 // keep data unchanged
@@ -154,7 +163,7 @@ public final class RankService implements PlayerRankService {
                     : new CurrencyCostDefinition[0];
 
             for (CurrencyCostDefinition cost : costs) {
-                if (!economy.hasBalance(uuid, cost.getAmount(), cost.getCurrencyId())) {
+                if (!economyManager.hasBalance(uuid, cost.getAmount(), cost.getCurrencyId())) {
                     player.sendMessage(Message.raw(
                             "Not enough " + cost.getCurrencyId() + " to rank up. Need: " + cost.getAmount()
                     ));
@@ -163,13 +172,13 @@ public final class RankService implements PlayerRankService {
             }
 
             for (CurrencyCostDefinition cost : costs) {
-                economy.withdraw(uuid, cost.getAmount(), cost.getCurrencyId());
+                economyManager.withdraw(uuid, cost.getAmount(), cost.getCurrencyId());
             }
 
             dataAfterLoad.setRankId(next.getId());
             player.sendMessage(Message.raw("Ranked up to " + next.getDisplayName() + "!"));
 
-            return store.save(uuid, dataAfterLoad);
+            return repository.save(uuid, dataAfterLoad);
         });
     }
 }

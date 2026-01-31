@@ -1,4 +1,4 @@
-package nl.trifox.foxprison.modules.ranks.commands.admin;
+package nl.trifox.foxprison.modules.ranks.command.admin;
 
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.command.system.AbstractCommand;

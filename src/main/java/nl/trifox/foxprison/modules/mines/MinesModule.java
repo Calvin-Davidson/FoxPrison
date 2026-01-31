@@ -7,7 +7,7 @@ import nl.trifox.foxprison.modules.mines.commands.admin.MineCommands;
 import nl.trifox.foxprison.modules.mines.commands.player.MineCommand;
 import nl.trifox.foxprison.modules.mines.events.MineBlockBreakEvent;
 import nl.trifox.foxprison.modules.ranks.RankModule;
-import nl.trifox.foxprison.modules.ranks.commands.player.RankUpCommand;
+import nl.trifox.foxprison.modules.ranks.command.player.RankUpCommand;
 
 public final class MinesModule implements FoxModule {
 

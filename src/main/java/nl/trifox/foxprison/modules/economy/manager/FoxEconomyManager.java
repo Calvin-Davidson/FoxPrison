@@ -187,6 +187,14 @@ public class FoxEconomyManager implements EconomyManager {
         return data;
     }
 
+    private CompletableFuture<PlayerBalanceData> getOrLoadAccountAsync(@Nonnull UUID playerUuid) {
+        if (cache.containsKey(playerUuid)) return CompletableFuture.completedFuture(cache.get(playerUuid));
+        return storage.balances().getOrCreate(playerUuid).thenApply(playerBalanceData -> {
+            ensureWalletsIfMissing(playerUuid, playerBalanceData);
+            return playerBalanceData;
+        });
+    }
+
     // ========== Balance Ops (Default currency) ==========
 
     @Override
@@ -484,6 +492,15 @@ public class FoxEconomyManager implements EconomyManager {
         }
 
         logger.at(Level.INFO).log("EconomyManager shutdown complete");
+    }
+
+    @Override
+    public CompletableFuture<Void> ensureAccountAsync(UUID uuid) {
+        PlayerBalanceData data = getOrLoadAccount(uuid);
+        if (data != null) {
+            ensureWalletsIfMissing(uuid, data);
+        }
+        return CompletableFuture.completedFuture(null);
     }
 
     public PlayerBalanceRepository getStorage() {

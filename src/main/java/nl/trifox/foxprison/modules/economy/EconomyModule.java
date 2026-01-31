@@ -1,12 +1,15 @@
 package nl.trifox.foxprison.modules.economy;
 
+import com.hypixel.hytale.server.core.event.events.player.PlayerDisconnectEvent;
+import com.hypixel.hytale.server.core.event.events.player.PlayerReadyEvent;
 import net.cfh.vault.VaultUnlockedServicesManager;
 import nl.trifox.foxprison.FoxPrisonPlugin;
 import nl.trifox.foxprison.framework.module.FoxModule;
 import nl.trifox.foxprison.framework.storage.StorageModule;
-import nl.trifox.foxprison.modules.economy.commands.player.BalanceCommand;
-import nl.trifox.foxprison.modules.economy.commands.admin.EcoAdminCommand;
-import nl.trifox.foxprison.modules.economy.commands.player.PayCommand;
+import nl.trifox.foxprison.modules.economy.command.player.BalanceCommand;
+import nl.trifox.foxprison.modules.economy.command.admin.EcoAdminCommand;
+import nl.trifox.foxprison.modules.economy.command.player.PayCommand;
+import nl.trifox.foxprison.modules.economy.event.PlayerEvents;
 import nl.trifox.foxprison.modules.economy.manager.FoxEconomyManager;
 import nl.trifox.foxprison.modules.economy.manager.VaultUnlockedEconomyManager;
 
@@ -39,6 +42,9 @@ public final class EconomyModule implements FoxModule {
             registry.registerCommand(new BalanceCommand());
             registry.registerCommand(new EcoAdminCommand());
             registry.registerCommand(new PayCommand());
+
+            plugin.getEventRegistry().registerGlobal(PlayerReadyEvent.class, PlayerEvents::onPlayerReady);
+            plugin.getEventRegistry().registerGlobal(PlayerDisconnectEvent.class, PlayerEvents::onPlayerQuit);
         } else {
             this.economyManager = new VaultUnlockedEconomyManager(VaultUnlockedServicesManager.get().economyObj());
         }

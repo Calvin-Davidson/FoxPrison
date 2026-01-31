@@ -23,7 +23,6 @@ public final class JsonPlayerRankRepository implements PlayerRankRepository, Aut
     private final File folder;
     private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
-    private final ConcurrentHashMap<UUID, PlayerRankData> cache = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<UUID, Object> locks = new ConcurrentHashMap<>();
 
     private final ExecutorService io =
@@ -65,31 +64,22 @@ public final class JsonPlayerRankRepository implements PlayerRankRepository, Aut
     @Override
     public CompletableFuture<PlayerRankData> getOrCreate(UUID playerId) {
         return CompletableFuture.supplyAsync(() -> {
-            PlayerRankData cached = cache.get(playerId);
-            if (cached != null) return cached;
-
             synchronized (lock(playerId)) {
-                PlayerRankData again = cache.get(playerId);
-                if (again != null) return again;
-
                 File f = file(playerId);
                 if (f.exists()) {
                     try (FileReader reader = new FileReader(f)) {
                         PlayerRankData loaded = gson.fromJson(reader, PlayerRankData.class);
                         if (loaded == null) loaded = new PlayerRankData();
-                        cache.put(playerId, loaded);
                         return loaded;
                     } catch (IOException e) {
                         plugin.getLogger().atSevere().log("Could not read rank data for " + playerId, e);
                         PlayerRankData fallback = new PlayerRankData();
-                        cache.put(playerId, fallback);
                         return fallback;
                     }
                 }
 
                 // Create new + persist synchronously (NO save().join() here)
                 PlayerRankData created = new PlayerRankData();
-                cache.put(playerId, created);
                 writeSync(playerId, created);
                 return created;
             }
@@ -100,7 +90,6 @@ public final class JsonPlayerRankRepository implements PlayerRankRepository, Aut
     public CompletableFuture<Boolean> save(UUID playerId, PlayerRankData data) {
         return CompletableFuture.supplyAsync(() -> {
             synchronized (lock(playerId)) {
-                cache.put(playerId, data);
                 return writeSync(playerId, data);
             }
         }, io);
@@ -111,18 +100,17 @@ public final class JsonPlayerRankRepository implements PlayerRankRepository, Aut
         return CompletableFuture.supplyAsync(() -> {
             synchronized (lock(playerId)) {
                 // Load (cache first, then disk)
-                PlayerRankData current = cache.get(playerId);
-                if (current == null) {
-                    File f = file(playerId);
-                    if (f.exists()) {
-                        try (FileReader reader = new FileReader(f)) {
-                            current = gson.fromJson(reader, PlayerRankData.class);
-                        } catch (IOException e) {
-                            plugin.getLogger().atSevere().log("Could not read rank data for " + playerId, e);
-                        }
+                PlayerRankData current = null;
+
+                File f = file(playerId);
+                if (f.exists()) {
+                    try (FileReader reader = new FileReader(f)) {
+                        current = gson.fromJson(reader, PlayerRankData.class);
+                    } catch (IOException e) {
+                        plugin.getLogger().atSevere().log("Could not read rank data for " + playerId, e);
                     }
-                    if (current == null) current = new PlayerRankData();
                 }
+                if (current == null) current = new PlayerRankData();
 
                 // Mutate safely
                 PlayerRankData mutated;
@@ -134,7 +122,6 @@ public final class JsonPlayerRankRepository implements PlayerRankRepository, Aut
                 }
                 if (mutated == null) mutated = current;
 
-                cache.put(playerId, mutated);
                 writeSync(playerId, mutated);
 
                 return mutated;

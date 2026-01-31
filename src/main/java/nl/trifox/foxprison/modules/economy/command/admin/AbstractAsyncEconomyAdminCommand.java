@@ -1,8 +1,7 @@
-package nl.trifox.foxprison.modules.economy.commands.admin;
+package nl.trifox.foxprison.modules.economy.command.admin;
 
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.server.core.Message;
-import com.hypixel.hytale.server.core.command.system.AbstractCommand;
 import com.hypixel.hytale.server.core.command.system.CommandContext;
 import com.hypixel.hytale.server.core.command.system.CommandSender;
 import com.hypixel.hytale.server.core.command.system.arguments.system.OptionalArg;
@@ -15,7 +14,6 @@ import nl.trifox.foxprison.FoxPrisonPlugin;
 import nl.trifox.foxprison.modules.economy.EconomyManager;
 import nl.trifox.foxprison.modules.economy.config.CurrencyDefinition;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.concurrent.CompletableFuture;

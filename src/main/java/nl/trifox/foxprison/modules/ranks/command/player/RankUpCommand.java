@@ -1,4 +1,4 @@
-package nl.trifox.foxprison.modules.ranks.commands.player;
+package nl.trifox.foxprison.modules.ranks.command.player;
 
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;

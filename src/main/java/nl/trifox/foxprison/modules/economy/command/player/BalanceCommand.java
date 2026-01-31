@@ -1,4 +1,4 @@
-package nl.trifox.foxprison.modules.economy.commands.player;
+package nl.trifox.foxprison.modules.economy.command.player;
 
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;

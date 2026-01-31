@@ -191,7 +191,7 @@ public class MineService {
     }
 
     public Optional<MineDefinition> getMine(String mineId) {
-        return Arrays.stream(mines.get().getMines()).filter(x -> x.getId().equalsIgnoreCase(mineId)).findFirst();
+        return findMine(mineId);
     }
 
     public CompletableFuture<Boolean> SetSpawnableBlockPattern(String mineId, BlockPattern pattern) {

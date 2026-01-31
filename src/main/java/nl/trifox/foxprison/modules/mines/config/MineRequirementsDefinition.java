@@ -28,4 +28,8 @@ public class MineRequirementsDefinition {
     public String[] getAllowedRanks() {
         return allowedRanks;
     }
+
+    public void setAllowedRanks(String[] allowedRanks) {
+        this.allowedRanks = allowedRanks;
+    }
 }

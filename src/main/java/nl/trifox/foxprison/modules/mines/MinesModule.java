@@ -1,6 +1,7 @@
 package nl.trifox.foxprison.modules.mines;
 
 import nl.trifox.foxprison.FoxPrisonPlugin;
+import nl.trifox.foxprison.api.interfaces.PlayerRankService;
 import nl.trifox.foxprison.framework.module.FoxModule;
 import nl.trifox.foxprison.modules.mines.commands.admin.MineCommands;
 import nl.trifox.foxprison.modules.mines.commands.player.MineCommand;
@@ -12,18 +13,21 @@ public final class MinesModule implements FoxModule {
 
     private final FoxPrisonPlugin plugin;
     private final RankModule rankModule;
-    private final MineService mineService;
+    private final PlayerRankService playerRankService;
 
-    public MinesModule(FoxPrisonPlugin plugin, RankModule rankModule) {
+    private MineService mineService;
+
+    public MinesModule(FoxPrisonPlugin plugin, RankModule rankModule, PlayerRankService playerRankService) {
         this.plugin = plugin;
         this.rankModule = rankModule;
-
-        this.mineService = new MineService(plugin.getCoreConfig(), plugin.getMinesConfig());
-        plugin.getEntityStoreRegistry().registerSystem(new MineBlockBreakEvent(mineService));
+        this.playerRankService = playerRankService;
     }
 
     @Override
     public void start() {
+        this.mineService = new MineService(plugin.getCoreConfig(), plugin.getMinesConfig(), playerRankService);
+        plugin.getEntityStoreRegistry().registerSystem(new MineBlockBreakEvent(mineService));
+
         mineService.startAutoResetLoop(plugin.getTaskRegistry());
 
         var ranks = rankModule.getRankService();

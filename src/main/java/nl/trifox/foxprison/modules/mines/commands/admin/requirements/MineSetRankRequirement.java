@@ -44,7 +44,7 @@ public class MineSetRankRequirement extends AbstractAsyncCommand {
         if (raw.equalsIgnoreCase("none")) {
             MineRequirementsDefinition req = mineOpt.get().getRequirements();
             if (req == null) req = new MineRequirementsDefinition();
-            req.allowedRanks = new String[0];
+            req.setAllowedRanks(new String[0]);
             mineOpt.get().setRequirements(req);
 
             ctx.sender().sendMessage(Message.raw("Cleared required ranks for mine '" + mineOpt.get().getId() + "'."));
@@ -64,7 +64,7 @@ public class MineSetRankRequirement extends AbstractAsyncCommand {
 
         MineRequirementsDefinition req = mineOpt.get().getRequirements();
         if (req == null) req = new MineRequirementsDefinition();
-        req.allowedRanks = ranks;
+        req.setAllowedRanks(ranks);
 
         mineOpt.get().setRequirements(req);
 

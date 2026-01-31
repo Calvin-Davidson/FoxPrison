@@ -4,6 +4,7 @@ import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.command.system.CommandSender;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.util.Config;
+import nl.trifox.foxprison.api.interfaces.PlayerRankService;
 import nl.trifox.foxprison.framework.storage.repositories.PlayerRankRepository;
 import nl.trifox.foxprison.modules.economy.EconomyManager;
 import nl.trifox.foxprison.modules.ranks.config.CurrencyCostDefinition;
@@ -17,7 +18,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.IntStream;
 
-public final class RankService {
+public final class RankService implements PlayerRankService {
 
     private final PlayerRankRepository store;
     private final EconomyManager economy;
@@ -68,6 +69,11 @@ public final class RankService {
     public CompletableFuture<Integer> getRankIndex(UUID playerUuid) {
         final RankDefinition[] all = ranks.get().getRanks();
         return getRankIdByPlayer(playerUuid).thenApply(rankId -> indexOfRank(all, rankId));
+    }
+
+    @Override
+    public CompletableFuture<String> getRankID(UUID playerId) {
+        return store.getOrCreate(playerId).thenApply(PlayerRankData::getRankId);
     }
 
     public CompletableFuture<Boolean> hasRank(UUID playerUuid, String requiredRankId) {

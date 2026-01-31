@@ -34,7 +34,7 @@ public class MineResetCommand extends AbstractAsyncCommand {
             return CompletableFuture.completedFuture(null);
         }
 
-        service.resetMine(mineId.get(context), new Random());
+        service.resetMine(mineId.get(context));
 
         context.sender().sendMessage(Message.raw("Mine resetted"));
         return CompletableFuture.completedFuture(null);

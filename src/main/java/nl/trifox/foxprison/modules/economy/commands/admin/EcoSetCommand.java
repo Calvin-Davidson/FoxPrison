@@ -39,10 +39,10 @@ public class EcoSetCommand extends AbstractAsyncEconomyAdminCommand {
         var store = targetRef.getStore();
         var world = store.getExternalData().getWorld();
 
-        PlayerRef playerRef = store.getComponent(targetRef, PlayerRef.getComponentType());
-        if (playerRef == null) return CompletableFuture.completedFuture(null);
-
         return CompletableFuture.runAsync(() -> {
+            PlayerRef playerRef = store.getComponent(targetRef, PlayerRef.getComponentType());
+            if (playerRef == null) return;
+
             double oldBalance = getEconomyManager().getBalance(playerRef.getUuid(), currency.getId());
             getEconomyManager().setBalance(playerRef.getUuid(), amount,"Admin set", currency.getId());
 

@@ -28,13 +28,12 @@ public class EcoResetCommand extends AbstractAsyncEconomyAdminCommand {
         var store = targetRef.getStore();
         var world = store.getExternalData().getWorld();
 
-        PlayerRef playerRef = store.getComponent(targetRef, PlayerRef.getComponentType());
-
-        if (playerRef == null) return CompletableFuture.completedFuture(null);
-
         return CompletableFuture.runAsync(() -> {
-            double startingBalance = FoxPrisonPlugin.getInstance().getEconomyConfig().get().getDefaultCurrency().getStartingBalance();
-            FoxPrisonPlugin.getEconomyModule().getEconomyManager().setBalance(playerRef.getUuid(), startingBalance, "Admin reset");
+            PlayerRef playerRef = store.getComponent(targetRef, PlayerRef.getComponentType());
+            if (playerRef == null) return;
+
+            double startingBalance = FoxPrisonPlugin.getInstance().getEconomyConfig().get().getCurrency(currency.getId()).getStartingBalance();
+            getEconomyManager().setBalance(playerRef.getUuid(), startingBalance, "Admin reset");
 
             context.sender().sendMessage(Message.join(
                     Message.raw("Balance reset to ").color(Color.GREEN),

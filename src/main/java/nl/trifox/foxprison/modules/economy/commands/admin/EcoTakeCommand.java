@@ -37,10 +37,10 @@ public  class EcoTakeCommand extends AbstractAsyncEconomyAdminCommand {
         var store = targetRef.getStore();
         var world = store.getExternalData().getWorld();
 
-        PlayerRef playerRef = store.getComponent(targetRef, PlayerRef.getComponentType());
-        if (playerRef == null) return CompletableFuture.completedFuture(null);
-
         return CompletableFuture.runAsync(() -> {
+            PlayerRef playerRef = store.getComponent(targetRef, PlayerRef.getComponentType());
+            if (playerRef == null) return;
+
             boolean success = FoxPrisonPlugin.getEconomyModule().getEconomyManager().withdraw(playerRef.getUuid(), amount, "Admin take", currency.getId());
             double newBalance = FoxPrisonPlugin.getEconomyModule().getEconomyManager().getBalance(playerRef.getUuid(), currency.getId());
 

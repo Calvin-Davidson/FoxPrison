@@ -38,18 +38,18 @@ public class EcoGiveCommand extends AbstractAsyncEconomyAdminCommand {
         var store = targetRef.getStore();
         var world = store.getExternalData().getWorld();
 
-        PlayerRef playerRef = store.getComponent(targetRef, PlayerRef.getComponentType());
-        if (playerRef == null) return CompletableFuture.completedFuture(null);
-
         return CompletableFuture.runAsync(() -> {
-            FoxPrisonPlugin.getEconomyModule().getEconomyManager().deposit(playerRef.getUuid(), amount, "Admin give");
-            double newBalance = FoxPrisonPlugin.getEconomyModule().getEconomyManager().getBalance(playerRef.getUuid());
+            PlayerRef playerRef = store.getComponent(targetRef, PlayerRef.getComponentType());
+            if (playerRef == null) return;
+
+            FoxPrisonPlugin.getEconomyModule().getEconomyManager().deposit(playerRef.getUuid(), amount, "Admin give", currency.getId());
+            double newBalance = FoxPrisonPlugin.getEconomyModule().getEconomyManager().getBalance(playerRef.getUuid(), currency.getId());
 
             context.sender().sendMessage(Message.join(
                     Message.raw("Added ").color(Color.GREEN),
-                    Message.raw("+" + FoxPrisonPlugin.getInstance().getEconomyConfig().get().getDefaultCurrency().format(amount)).color(new Color(50, 205, 50)),
+                    Message.raw("+" + FoxPrisonPlugin.getInstance().getEconomyConfig().get().getCurrency(currency.getId()).format(amount)).color(new Color(50, 205, 50)),
                     Message.raw(" | New balance: ").color(Color.GRAY),
-                    Message.raw(FoxPrisonPlugin.getInstance().getEconomyConfig().get().getDefaultCurrency().format(newBalance)).color(Color.WHITE)
+                    Message.raw(FoxPrisonPlugin.getInstance().getEconomyConfig().get().getCurrency(currency.getId()).format(newBalance)).color(Color.WHITE)
             ));
         }, world);
     }

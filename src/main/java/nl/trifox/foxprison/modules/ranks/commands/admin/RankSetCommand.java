@@ -16,7 +16,7 @@ public class RankSetCommand extends AbstractCommand {
     private final RequiredArg<PlayerRef> playerName;
     private final RequiredArg<String> targetRank;
 
-    protected RankSetCommand(RankService service) {
+    public RankSetCommand(RankService service) {
         super("set", "set's the rank of an specific player");
         this.service = service;
         this.playerName = this.withRequiredArg("Player name", "The name of the place which you want to change the rank of", ArgTypes.PLAYER_REF);

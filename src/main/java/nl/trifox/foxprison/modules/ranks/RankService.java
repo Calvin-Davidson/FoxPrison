@@ -51,10 +51,11 @@ public class RankService
             }
 
             RankDefinition next = all[idx + 1];
-            var currencyCosts = next.getCosts().getCurrency();
+            var currencyCosts = next.getCosts().getCurrencies();
             for (CurrencyCostDefinition currencyCost : currencyCosts) {
                 if (!economy.hasBalance(player.getUuid(), currencyCost.getAmount(), currencyCost.getCurrencyId())) {
                     player.sendMessage(Message.raw("Not enough " + currencyCost.getCurrencyId() + " to rank up. Need: " + currencyCost.getAmount()));
+                    return CompletableFuture.completedFuture(false);
                 }
             }
 

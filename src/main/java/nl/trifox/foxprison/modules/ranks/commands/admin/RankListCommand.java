@@ -15,7 +15,7 @@ public class RankListCommand extends AbstractCommand {
 
     private final RankService rankService;
 
-    protected RankListCommand(RankService rankService) {
+    public RankListCommand(RankService rankService) {
         super("list", "list all existing ranks");
         this.rankService = rankService;
     }

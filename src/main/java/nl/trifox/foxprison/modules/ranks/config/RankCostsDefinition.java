@@ -5,6 +5,10 @@ import com.hypixel.hytale.codec.KeyedCodec;
 import com.hypixel.hytale.codec.builder.BuilderCodec;
 import com.hypixel.hytale.codec.codecs.array.ArrayCodec;
 import nl.trifox.foxprison.modules.economy.config.CurrencyDefinition;
+import nl.trifox.foxprison.modules.mines.config.MineDefinition;
+import nl.trifox.foxprison.modules.mines.config.MinesConfig;
+
+import java.util.Arrays;
 
 public final class RankCostsDefinition {
 
@@ -14,8 +18,8 @@ public final class RankCostsDefinition {
     public static final BuilderCodec<RankCostsDefinition> CODEC =
             BuilderCodec.builder(RankCostsDefinition.class, RankCostsDefinition::new)
                     .append(new KeyedCodec<>("Currency", CURRENCY_COSTS_ARRAY_CODEC),
-                            (c, v, i) -> c.currency = (v == null ? new CurrencyCostDefinition[0] : v),
-                            (c, i) -> c.currency)
+                            (c, v, i) -> c.currencies = (v == null ? new CurrencyCostDefinition[0] : v),
+                            (c, i) -> c.currencies)
                     .add()
                     .append(new KeyedCodec<>("BlocksMined", Codec.LONG),
                             (c, v, i) -> c.blocksMined = Math.max(0L, v),
@@ -24,13 +28,13 @@ public final class RankCostsDefinition {
                     .build();
 
     // Multi-currency “spend” costs
-    private CurrencyCostDefinition[] currency = new CurrencyCostDefinition[0];
+    private CurrencyCostDefinition[] currencies = new CurrencyCostDefinition[0];
 
     // Non-currency requirement (not “spent”; just required)
     private long blocksMined = 0L;
 
-    public CurrencyCostDefinition[] getCurrency() {
-        return currency == null ? new CurrencyCostDefinition[0] : currency;
+    public CurrencyCostDefinition[] getCurrencies() {
+        return currencies == null ? new CurrencyCostDefinition[0] : currencies;
     }
 
     public long getBlocksMined() {
@@ -39,7 +43,7 @@ public final class RankCostsDefinition {
 
     public double getCurrencyCost(String currencyId) {
         String id = CurrencyDefinition.normalize(currencyId);
-        for (CurrencyCostDefinition c : getCurrency()) {
+        for (CurrencyCostDefinition c : getCurrencies()) {
             if (c != null && c.getCurrencyId().equalsIgnoreCase(id)) {
                 return c.getAmount();
             }
@@ -47,19 +51,19 @@ public final class RankCostsDefinition {
         return 0.0;
     }
 
-    public boolean hasAnyCurrencyCosts() {
-        return getCurrency().length > 0;
+    public void setCurrencyCost(String currencyId, double amount) {
+        var existing = Arrays.stream(currencies).filter(currencyCostDefinition -> currencyCostDefinition.getCurrencyId().equalsIgnoreCase(currencyId)).findFirst();
+        if (existing.isEmpty()) {
+            CurrencyCostDefinition[] oldArr = currencies;
+            CurrencyCostDefinition[] newArr = java.util.Arrays.copyOf(oldArr, oldArr.length + 1);
+            newArr[newArr.length - 1] = new CurrencyCostDefinition(currencyId, amount);
+            currencies = newArr;
+        } else {
+            existing.get().setAmount(amount);
+        }
     }
 
-    public void ensureDefaultsFromLegacy(double legacyCost, String defaultCurrencyId) {
-        if (legacyCost <= 0) return;
-
-        // If new currency costs already exist, don't inject legacy.
-        if (hasAnyCurrencyCosts()) return;
-
-        String id = CurrencyDefinition.normalize(defaultCurrencyId);
-        this.currency = new CurrencyCostDefinition[] {
-                new CurrencyCostDefinition(id, legacyCost)
-        };
+    public boolean hasAnyCurrencyCosts() {
+        return getCurrencies().length > 0;
     }
 }

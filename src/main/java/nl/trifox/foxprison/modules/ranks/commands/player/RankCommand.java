@@ -9,6 +9,8 @@ import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import nl.trifox.foxprison.modules.ranks.RankService;
+import nl.trifox.foxprison.modules.ranks.commands.admin.RankListCommand;
+import nl.trifox.foxprison.modules.ranks.commands.admin.RankSetCommand;
 import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 
 import java.util.concurrent.CompletableFuture;
@@ -18,6 +20,8 @@ public class RankCommand extends AbstractAsyncPlayerCommand {
 
     public RankCommand(RankService service) {
         super("rank", "get's info about your current rank");
+        addSubCommand(new RankListCommand(service));
+        addSubCommand(new RankSetCommand(service));
         this.service = service;
     }
 

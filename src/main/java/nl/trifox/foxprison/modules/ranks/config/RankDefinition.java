@@ -35,4 +35,14 @@ public final class RankDefinition {
         return costs;
     }
 
+    public RankDefinition() {
+
+    }
+
+    public RankDefinition(String id, String name, double cost) {
+        this.id = id;
+        this.displayName = name;
+        this.costs = new RankCostsDefinition();
+        this.costs.setCurrencyCost("money", cost);
+    }
 }

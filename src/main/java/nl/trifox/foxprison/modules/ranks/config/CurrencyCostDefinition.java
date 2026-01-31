@@ -31,4 +31,8 @@ public final class CurrencyCostDefinition {
 
     public String getCurrencyId() { return currencyId; }
     public double getAmount() { return amount; }
+
+    public void setAmount(double amount) {
+        this.amount = amount;
+    }
 }

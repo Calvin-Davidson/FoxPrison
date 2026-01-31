@@ -2,6 +2,7 @@ package nl.trifox.foxprison.modules.mines.commands.admin;
 
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
+import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.command.system.CommandContext;
 import com.hypixel.hytale.server.core.command.system.basecommands.AbstractAsyncPlayerCommand;
 import com.hypixel.hytale.server.core.command.system.arguments.system.RequiredArg;
@@ -31,7 +32,13 @@ public class MineTpCommand extends AbstractAsyncPlayerCommand {
     @NonNullDecl
     @Override
     protected CompletableFuture<Void> executeAsync(@NonNullDecl CommandContext context, @NonNullDecl Store<EntityStore> store, @NonNullDecl Ref<EntityStore> ref, @NonNullDecl PlayerRef playerRef, @NonNullDecl World world) {
-        service.mine(playerRef, mineArg.get(context));
+        var mine = service.getMine(mineArg.get(context));
+        if (mine.isEmpty()) {
+            playerRef.sendMessage(Message.raw("Mine does not exist"));
+            return CompletableFuture.completedFuture(null);
+        }
+
+        service.teleportToMine(playerRef, mine.get());
         return CompletableFuture.completedFuture(null);
     }
 }

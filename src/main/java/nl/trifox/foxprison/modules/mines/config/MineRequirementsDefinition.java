@@ -19,10 +19,13 @@ public class MineRequirementsDefinition {
                     .build();
 
 
-    public String[] allowedRanks;
+    private String[] allowedRanks;
 
     public void setRankID(String[] ranks) {
         this.allowedRanks = ranks;
     }
 
+    public String[] getAllowedRanks() {
+        return allowedRanks;
+    }
 }

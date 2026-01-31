@@ -15,6 +15,10 @@ public class MineDefinition {
                             (m, v) -> m.id = v,
                             m -> m.id)
                     .add()
+                    .append(new KeyedCodec<>("Order", Codec.INTEGER),
+                            (m, v) -> m.order = v,
+                            m -> m.order)
+                    .add()
                     .append(new KeyedCodec<>("DisplayName", Codec.STRING),
                             (m, v) -> m.displayName = v,
                             m -> m.displayName)
@@ -52,6 +56,7 @@ public class MineDefinition {
     private String id = "a";
     private String displayName = "Mine A";
     private String world = "default";
+    private Integer order;
 
     // Always non-null in saved config
     private Transform spawn = new Transform(0,0,0);
@@ -159,5 +164,13 @@ public class MineDefinition {
 
     public MineProtectionDefinition getMineProtectionDefinition() {
         return mineProtectionDefinition;
+    }
+
+    public Integer getOrder() {
+        return order;
+    }
+
+    public void setOrder(Integer order) {
+        this.order = order;
     }
 }

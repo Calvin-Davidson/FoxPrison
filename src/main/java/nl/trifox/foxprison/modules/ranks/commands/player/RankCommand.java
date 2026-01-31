@@ -28,7 +28,7 @@ public class RankCommand extends AbstractAsyncPlayerCommand {
     @NonNullDecl
     @Override
     protected CompletableFuture<Void> executeAsync(@NonNullDecl CommandContext commandContext, @NonNullDecl Store<EntityStore> store, @NonNullDecl Ref<EntityStore> ref, @NonNullDecl PlayerRef playerRef, @NonNullDecl World world) {
-        return service.getRankIdByPlayer(playerRef).thenCompose(rankID -> {
+        return service.getRankIdByPlayer(playerRef.getUuid()).thenCompose(rankID -> {
             var optionalRank = service.getRank(rankID);
             if (optionalRank.isEmpty()) {
                 playerRef.sendMessage(Message.raw("your rank does no longer exist"));

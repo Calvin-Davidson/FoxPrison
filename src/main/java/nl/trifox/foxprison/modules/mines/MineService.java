@@ -17,6 +17,7 @@ import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.server.core.util.Config;
 
+import nl.trifox.foxprison.api.interfaces.PlayerRankService;
 import nl.trifox.foxprison.framework.config.CoreConfig;
 import nl.trifox.foxprison.modules.mines.config.*;
 import nl.trifox.foxprison.modules.mines.data.MineRuntimeState;
@@ -31,38 +32,77 @@ public class MineService {
 
     private final Config<CoreConfig> core;
     private final Config<MinesConfig> mines;
+    private final PlayerRankService playerRankService;
 
     private final ConcurrentHashMap<String, MineRuntimeState> mineStates = new ConcurrentHashMap<>();
 
 
-    public MineService(Config<CoreConfig> core, Config<MinesConfig> mines) {
+    public MineService(Config<CoreConfig> core, Config<MinesConfig> mines, PlayerRankService playerRankService) {
         this.core = core;
         this.mines = mines;
+        this.playerRankService = playerRankService;
     }
 
     public void mine(PlayerRef player, String mineIdOrNull) {
-        String mineId = (mineIdOrNull == null || mineIdOrNull.isBlank())
-                ? core.get().getDefaultMineId()
-                : mineIdOrNull;
+        String requested = (mineIdOrNull == null ? "" : mineIdOrNull.trim());
 
-        Optional<MineDefinition> mine = findMine(mineId);
-        if (mine.isEmpty()) {
-            player.sendMessage(Message.raw("Unknown mine: " + mineId));
-            return;
-        }
+        // async fetch player rank id
+        playerRankService.getRankID(player.getUuid()).thenAccept(playerRankId -> {
 
-        MineDefinition def = mine.get();
-        var spawn = mine.get().getSpawn();
-        var world = Universe.get().getWorld(mine.get().getWorld());
+            MineDefinition target;
+
+            if (!requested.isBlank()) {
+                var mineOpt = findMine(requested);
+                if (mineOpt.isEmpty()) {
+                    player.sendMessage(Message.raw("Unknown mine: " + requested));
+                    return;
+                }
+
+                var requestedMine = mineOpt.get();
+                if (isRankAllowed(requestedMine, playerRankId)) {
+                    target = requestedMine;
+                } else {
+                    target = findMaxMineForPlayerRank(playerRankId);
+                    if (target == null) {
+                        player.sendMessage(Message.raw("You can't access any mines yet."));
+                        return;
+                    }
+                    player.sendMessage(Message.raw("You can't access that mine yet. Sending you to: " + target.getDisplayName()));
+                }
+            } else {
+                target = findMaxMineForPlayerRank(playerRankId);
+                if (target == null) {
+                    // fallback: default mine id / first mine
+                    target = findMine(core.get().getDefaultMineId()).orElseGet(() -> {
+                        MineDefinition[] arr = mines.get().getMines();
+                        return (arr != null && arr.length > 0) ? arr[0] : null;
+                    });
+                    if (target == null) {
+                        player.sendMessage(Message.raw("No mines are configured."));
+                        return;
+                    }
+                }
+            }
+
+            teleportToMine(player, target);
+            player.sendMessage(Message.raw("Teleporting to " + target.getDisplayName()
+                    + " @ " + target.getWorld() + " (" + target.getSpawn().getPosition().getX() + ", " + target.getSpawn().getPosition().getY() + ", " + target.getSpawn().getPosition().getZ() + ")"));
+
+        }).exceptionally(err -> {
+            player.sendMessage(Message.raw("Could not determine your rank right now."));
+            return null;
+        });
+    }
+
+
+    public void teleportToMine(PlayerRef player, MineDefinition mine) {
+        var spawn = mine.getSpawn();
+        var world = Universe.get().getWorld(mine.getWorld());
         var teleport = Teleport.createForPlayer(world, spawn.getPosition(), spawn.getRotation());
 
         Store<EntityStore> store = player.getReference().getStore();
         store.addComponent(player.getReference(), Teleport.getComponentType(), teleport);
-
-        player.sendMessage(Message.raw("Teleporting to " + def.getDisplayName()
-                + " @ " + def.getWorld() + " (" + def.getSpawn().getPosition().getX() + ", " + def.getSpawn().getPosition().getY() + ", " + def.getSpawn().getPosition().getZ() + ")"));
     }
-
 
     public List<MineDefinition> getAllMines() {
         return Arrays.asList(mines.get().getMines());
@@ -427,5 +467,50 @@ public class MineService {
         def.setIntervalSeconds(intervalSeconds);
         mine.setAutoReset(def);
         return mines.save().thenApply(_ -> true);
+    }
+
+    private boolean isRankAllowed(MineDefinition mine, String playerRankId) {
+        if (mine == null) return false;
+
+        MineRequirementsDefinition req = mine.getRequirements();
+        if (req == null) return true;
+
+        String[] allowed = req.getAllowedRanks();
+        if (allowed.length == 0) return true;
+        if (playerRankId == null || playerRankId.isBlank()) return false;
+
+        for (String r : allowed) {
+            if (r != null && r.equalsIgnoreCase(playerRankId)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    private MineDefinition findMaxMineForPlayerRank(String playerRankId) {
+        MineDefinition best = null;
+        int bestTier = Integer.MIN_VALUE;
+
+        MineDefinition[] all = mines.get().getMines();
+        if (all == null) return null;
+
+        for (MineDefinition m : all) {
+            if (!isRankAllowed(m, playerRankId)) continue;
+
+            int tier = mineTier(m);
+            if (tier >= bestTier) {
+                bestTier = tier;
+                best = m;
+            }
+        }
+
+        return best;
+    }
+
+    private int mineTier(MineDefinition mine) {
+        MineRequirementsDefinition req = mine.getRequirements();
+        if (req == null) return 0;
+
+        return mine.getOrder();
     }
 }

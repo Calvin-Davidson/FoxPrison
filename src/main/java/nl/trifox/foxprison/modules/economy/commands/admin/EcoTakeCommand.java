@@ -1,66 +1,59 @@
 package nl.trifox.foxprison.modules.economy.commands.admin;
 
+import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.command.system.CommandContext;
 import com.hypixel.hytale.server.core.command.system.CommandSender;
 import com.hypixel.hytale.server.core.command.system.arguments.system.RequiredArg;
 import com.hypixel.hytale.server.core.command.system.arguments.types.ArgTypes;
-import com.hypixel.hytale.server.core.command.system.basecommands.AbstractAsyncCommand;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
+import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import nl.trifox.foxprison.FoxPrisonPlugin;
-import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
+import nl.trifox.foxprison.modules.economy.config.CurrencyDefinition;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.concurrent.CompletableFuture;
 
-public  class EcoTakeCommand extends AbstractAsyncCommand {
+public  class EcoTakeCommand extends AbstractAsyncEconomyAdminCommand {
     private final RequiredArg<Double> amountArg;
 
     public EcoTakeCommand() {
         super("take", "Remove money from your balance");
         this.addAliases("remove");
         this.amountArg = this.withRequiredArg("amount", "The amount to remove", ArgTypes.DOUBLE);
+
     }
 
-    @NonNullDecl
     @Override
-    protected CompletableFuture<Void> executeAsync(CommandContext ctx) {
-        CommandSender sender = ctx.sender();
-        if (!(sender instanceof Player player)) {
-            ctx.sendMessage(Message.raw("This command can only be used by players").color(Color.RED));
-            return CompletableFuture.completedFuture(null);
-        }
-
-        Double amount = amountArg.get(ctx);
+    protected CompletableFuture<Void> executeAsync(@NotNull CommandContext context, Ref<EntityStore> targetRef, CurrencyDefinition currency) {
+        Double amount = amountArg.get(context);
         if (amount == null || amount <= 0) {
-            ctx.sendMessage(Message.raw("Amount must be positive").color(Color.RED));
+            context.sendMessage(Message.raw("Amount must be positive").color(Color.RED));
             return CompletableFuture.completedFuture(null);
         }
 
-        var ref = player.getReference();
-        if (ref == null || !ref.isValid()) return CompletableFuture.completedFuture(null);
-
-        var store = ref.getStore();
+        var store = targetRef.getStore();
         var world = store.getExternalData().getWorld();
 
-        return CompletableFuture.runAsync(() -> {
-            PlayerRef playerRef = store.getComponent(ref, PlayerRef.getComponentType());
-            if (playerRef == null) return;
+        PlayerRef playerRef = store.getComponent(targetRef, PlayerRef.getComponentType());
+        if (playerRef == null) return CompletableFuture.completedFuture(null);
 
-            boolean success = FoxPrisonPlugin.getEconomyModule().getEconomyManager().withdraw(playerRef.getUuid(), amount, "Admin take");
-            double newBalance = FoxPrisonPlugin.getEconomyModule().getEconomyManager().getBalance(playerRef.getUuid());
+        boolean success = FoxPrisonPlugin.getEconomyModule().getEconomyManager().withdraw(playerRef.getUuid(), amount, "Admin take", currency.getId());
+        double newBalance = FoxPrisonPlugin.getEconomyModule().getEconomyManager().getBalance(playerRef.getUuid(), currency.getId());
 
-            if (success) {
-                player.sendMessage(Message.join(
-                        Message.raw("Removed ").color(Color.YELLOW),
-                        Message.raw("-" + FoxPrisonPlugin.getInstance().getEconomyConfig().get().getDefaultCurrency().format(amount)).color(new Color(255, 99, 71)),
-                        Message.raw(" | New balance: ").color(Color.GRAY),
-                        Message.raw(FoxPrisonPlugin.getInstance().getEconomyConfig().get().getDefaultCurrency().format(newBalance)).color(Color.WHITE)
-                ));
-            } else {
-                player.sendMessage(Message.raw("Insufficient funds").color(Color.RED));
-            }
-        }, world);
+        if (success) {
+            context.sender().sendMessage(Message.join(
+                    Message.raw("Removed ").color(Color.YELLOW),
+                    Message.raw("-" + FoxPrisonPlugin.getInstance().getEconomyConfig().get().getCurrency(currency.getId()).format(amount)).color(new Color(255, 99, 71)),
+                    Message.raw(" | New balance: ").color(Color.GRAY),
+                    Message.raw(FoxPrisonPlugin.getInstance().getEconomyConfig().get().getCurrency(currency.getId()).format(newBalance)).color(Color.WHITE)
+            ));
+        } else {
+            context.sender().sendMessage(Message.raw("Insufficient funds").color(Color.RED));
+        }
+
+        return CompletableFuture.completedFuture(null);
     }
 }

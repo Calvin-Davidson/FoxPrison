@@ -107,6 +107,24 @@ public class MineService {
         return mines.save().thenApply(_ -> true);
     }
 
+    public CompletableFuture<Boolean> setSpawnPoint(
+            String id,
+            Transform transform
+    ) {
+        id = id.trim().toLowerCase();
+        if (id.isBlank()) return CompletableFuture.completedFuture(false);
+        var mine = findMine(id);
+        if (mine.isEmpty()) return CompletableFuture.completedFuture(false);
+
+        var spawnPos = new Vector3d(transform.getPosition().getX(), transform.getPosition().getY(), transform.getPosition().getZ());
+        var spawnRot = new Vector3f(transform.getRotation().getX(), transform.getRotation().getY(), transform.getRotation().getZ());
+        var spawnTransform = new Transform(spawnPos, spawnRot);
+
+        mine.get().setSpawn(spawnTransform);
+        return mines.save().thenApply(_ -> true);
+    }
+
+
     public CompletableFuture<Boolean> regionAddBox(
             String mineId,
             int minX, int minY, int minZ,

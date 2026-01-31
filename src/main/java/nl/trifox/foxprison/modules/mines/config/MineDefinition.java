@@ -149,6 +149,10 @@ public class MineDefinition {
         this.requirements = requirements;
     }
 
+    public void setSpawn(Transform transform) {
+        this.spawn = transform;
+    }
+
     public MineProtectionDefinition getMineProtectionDefinition() {
         return mineProtectionDefinition;
     }

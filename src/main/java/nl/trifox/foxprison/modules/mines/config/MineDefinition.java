@@ -149,6 +149,10 @@ public class MineDefinition {
         this.requirements = requirements;
     }
 
+    public void setAutoReset(AutoResetDefinition autoReset) {
+        this.autoReset = autoReset;
+    }
+
     public void setSpawn(Transform transform) {
         this.spawn = transform;
     }

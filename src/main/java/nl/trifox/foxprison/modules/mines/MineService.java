@@ -309,8 +309,8 @@ public class MineService {
                 // Don't immediately world.execute(this::runBatch) from inside the world thread,
                 // because large queues can get drained in the same tick and "stick" the world.
                 //
-                // Instead: schedule a tiny delay off-thread, then hop back to world thread. :contentReference[oaicite:4]{index=4}
-                long tickMs = Math.max(1L, world.getTickStepNanos() / 1_000_000L); // ~33ms at 30 TPS :contentReference[oaicite:5]{index=5}
+                // Instead: schedule a tiny delay off-thread, then hop back to world thread.
+                long tickMs = Math.max(1L, world.getTickStepNanos() / 1_000_000L);
 
                 HytaleServer.SCHEDULED_EXECUTOR.schedule(() -> {
                     if (result.isDone() || !world.isAlive()) return;
@@ -352,7 +352,6 @@ public class MineService {
 
 
     public void startAutoResetLoop(TaskRegistry taskRegistry) {
-        // Runs off-thread; do NOT edit the world directly here.
         @SuppressWarnings("unchecked")
         ScheduledFuture<Void> future = (ScheduledFuture<Void>) HytaleServer.SCHEDULED_EXECUTOR.scheduleWithFixedDelay(
                 this::tickIntervalResets,
@@ -416,7 +415,17 @@ public class MineService {
     }
 
 
-    public CompletableFuture<Boolean> setAutoReset(String id, Boolean aBoolean, Integer integer, Integer integer1, Integer integer2) {
-        return CompletableFuture.completedFuture(true);
+    public CompletableFuture<Boolean> setAutoReset(String id, Boolean aBoolean, Integer intervalSeconds, Integer blocksBroken, Integer minDelayBetweenResets) {
+        var mineOpt = findMine(id);
+        if (mineOpt.isEmpty()) return CompletableFuture.completedFuture(false);
+
+        var mine = mineOpt.get();
+        var def = new AutoResetDefinition();
+        def.setEnabled(aBoolean);
+        def.setMinSecondsBetweenResets(minDelayBetweenResets);
+        def.setBlocksBrokenThreshold(blocksBroken);
+        def.setIntervalSeconds(intervalSeconds);
+        mine.setAutoReset(def);
+        return mines.save().thenApply(_ -> true);
     }
 }

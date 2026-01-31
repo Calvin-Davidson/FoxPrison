@@ -4,39 +4,33 @@ import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
 import com.hypixel.hytale.server.core.util.Config;
 
-import net.cfh.vault.VaultUnlockedServicesManager;
-import nl.trifox.foxprison.commands.FoxPrisonCommand;
-import nl.trifox.foxprison.commands.economy.BalanceCommand;
-import nl.trifox.foxprison.commands.economy.admin.EcoAdminCommand;
-import nl.trifox.foxprison.commands.player.MineCommand;
-import nl.trifox.foxprison.commands.player.RankCommand;
-import nl.trifox.foxprison.commands.player.RankUpCommand;
-import nl.trifox.foxprison.commands.player.SellAllCommand;
+import nl.trifox.foxprison.framework.storage.StorageModule;
+import nl.trifox.foxprison.modules.economy.EconomyModule;
+import nl.trifox.foxprison.modules.economy.config.EconomyConfig;
+import nl.trifox.foxprison.modules.mines.MinesModule;
+import nl.trifox.foxprison.modules.ranks.RankModule;
 
-import nl.trifox.foxprison.config.CoreConfig;
-import nl.trifox.foxprison.config.mines.MinesConfig;
-import nl.trifox.foxprison.config.RanksConfig;
-
-import nl.trifox.foxprison.data.player.JsonPlayerDataStore;
-import nl.trifox.foxprison.data.player.PlayerDataStore;
-import nl.trifox.foxprison.economy.EconomyManager;
-import nl.trifox.foxprison.economy.VaultUnlockedEconomy;
-import nl.trifox.foxprison.events.MineBlockBreakEvent;
-import nl.trifox.foxprison.service.MineService;
-import nl.trifox.foxprison.service.RankService;
+import nl.trifox.foxprison.framework.config.CoreConfig;
+import nl.trifox.foxprison.modules.mines.config.MinesConfig;
+import nl.trifox.foxprison.modules.ranks.config.RanksConfig;
+import nl.trifox.foxprison.modules.sell.SellModule;
+import nl.trifox.foxprison.modules.sell.config.SellConfig;
 
 import javax.annotation.Nonnull;
 
 public class FoxPrisonPlugin extends JavaPlugin {
 
+    private static EconomyModule economyModule;
+    private static RankModule rankModule;
+    private static MinesModule mineModule;
+    private static StorageModule storageModule;
+    private SellModule sellModule;
+
     private final Config<CoreConfig> coreConfig;
     private final Config<RanksConfig> ranksConfig;
     private final Config<MinesConfig> minesConfig;
-
-    private final PlayerDataStore dataStore;
-    private EconomyManager economy;
-    private MineService mineService;
-    private RankService rankService;
+    private final Config<SellConfig> sellConfig;
+    private final Config<EconomyConfig> economyConfig;
 
     private static FoxPrisonPlugin instance;
 
@@ -47,54 +41,81 @@ public class FoxPrisonPlugin extends JavaPlugin {
         this.coreConfig = withConfig("Core", CoreConfig.CODEC);
         this.ranksConfig = withConfig("Ranks", RanksConfig.CODEC);
         this.minesConfig = withConfig("Mines", MinesConfig.CODEC);
-
-        this.dataStore = new JsonPlayerDataStore(this, init.getDataDirectory().resolve("PlayerPrisonData").toFile());
-    }
-
-    @Override
-    protected void start() {
-        mineService.startAutoResetLoop(getTaskRegistry());
-    }
-
-    @Override
-    protected void setup() {
-        try {
-            this.economy = new EconomyManager(this);
-            if (this.getCoreConfig().get().isEconomyEnabled()) {
-                VaultUnlockedServicesManager.get().economy(new VaultUnlockedEconomy());
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-
-        this.mineService = new MineService(this, dataStore, economy, coreConfig, ranksConfig, minesConfig);
-        this.rankService = new RankService(this, dataStore, economy, coreConfig, ranksConfig, minesConfig);
-
-        getCommandRegistry().registerCommand(new FoxPrisonCommand(this, mineService, rankService));
-        getCommandRegistry().registerCommand(new RankUpCommand(mineService, rankService));
-        getCommandRegistry().registerCommand(new MineCommand(mineService));
-        getCommandRegistry().registerCommand(new SellAllCommand(mineService));
-        getCommandRegistry().registerCommand(new RankCommand(rankService));
-
-        if (this.getCoreConfig().get().isEconomyEnabled()) {
-            getCommandRegistry().registerCommand(new EcoAdminCommand());
-            getCommandRegistry().registerCommand(new BalanceCommand());
-        }
-
-        this.getEntityStoreRegistry().registerSystem(new MineBlockBreakEvent(mineService));
-
-        getLogger().atInfo().log("FoxPrison setup complete.");
-    }
-
-    public Config<CoreConfig> getCoreConfig() { return coreConfig; }
-    public Config<RanksConfig> getRanksConfig() { return ranksConfig; }
-    public Config<MinesConfig> getMinesConfig() { return minesConfig; }
-
-    public EconomyManager getEconomy() {
-        return economy;
+        this.sellConfig = withConfig("Sell", SellConfig.CODEC);
+        this.economyConfig = withConfig("Economy", EconomyConfig.CODEC);
     }
 
     public static FoxPrisonPlugin getInstance() {
         return instance;
+    }
+
+    public static RankModule getRankModule() {
+        return rankModule;
+    }
+    public static MinesModule getMineModule() {return mineModule;}
+
+    public static EconomyModule getEconomyModule() {
+        return economyModule;
+    }
+
+    public static StorageModule getStorageModule() {
+        return storageModule;
+    }
+
+    @Override
+    protected void start() {
+        getLogger().atInfo().log("Plugin started!");
+    }
+
+    @Override
+    protected void setup() {
+        storageModule = new StorageModule(this, coreConfig.get());
+        economyModule = new EconomyModule(this, storageModule);
+        rankModule    = new RankModule(this, storageModule, economyModule);
+        mineModule    = new MinesModule(this, rankModule);
+        sellModule    = new SellModule(this, economyModule, sellConfig.get());
+
+        storageModule.start();
+        economyModule.start();
+        rankModule.start();
+        mineModule.start();
+        sellModule.start();;
+
+        getLogger().atInfo().log("FoxPrison setup complete.");
+    }
+
+    @Override
+    protected void shutdown() {
+        storageModule.stop();
+        economyModule.stop();
+        rankModule.stop();
+        mineModule.stop();
+        sellModule.stop();
+
+        super.shutdown();
+    }
+
+    public Config<MinesConfig> getMinesConfig() {
+        return minesConfig;
+    }
+
+    public Config<RanksConfig> getRanksConfig() {
+        return ranksConfig;
+    }
+
+    public Config<CoreConfig> getCoreConfig() {
+        return coreConfig;
+    }
+
+    public SellModule getSellModule() {
+        return sellModule;
+    }
+
+    public Config<SellConfig> getSellConfig() {
+        return sellConfig;
+    }
+
+    public Config<EconomyConfig> getEconomyConfig() {
+        return economyConfig;
     }
 }

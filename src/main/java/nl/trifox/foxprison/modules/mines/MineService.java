@@ -431,6 +431,8 @@ public class MineService {
         var ar = mine.getAutoReset();
         var st = getState(mineId);
 
+        if (st.brokenBlocks.compareAndSet(0, 0)) return; // don't reset mines that have nothing to reset.
+
         long minGapMs = (ar != null ? ar.getMinSecondsBetweenResets() : 5) * 1000L;
         if (st.lastResetAtMs != 0 && (nowMs - st.lastResetAtMs) < minGapMs) return;
 

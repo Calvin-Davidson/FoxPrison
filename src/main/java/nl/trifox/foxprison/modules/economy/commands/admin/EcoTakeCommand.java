@@ -40,20 +40,20 @@ public  class EcoTakeCommand extends AbstractAsyncEconomyAdminCommand {
         PlayerRef playerRef = store.getComponent(targetRef, PlayerRef.getComponentType());
         if (playerRef == null) return CompletableFuture.completedFuture(null);
 
-        boolean success = FoxPrisonPlugin.getEconomyModule().getEconomyManager().withdraw(playerRef.getUuid(), amount, "Admin take", currency.getId());
-        double newBalance = FoxPrisonPlugin.getEconomyModule().getEconomyManager().getBalance(playerRef.getUuid(), currency.getId());
+        return CompletableFuture.runAsync(() -> {
+            boolean success = FoxPrisonPlugin.getEconomyModule().getEconomyManager().withdraw(playerRef.getUuid(), amount, "Admin take", currency.getId());
+            double newBalance = FoxPrisonPlugin.getEconomyModule().getEconomyManager().getBalance(playerRef.getUuid(), currency.getId());
 
-        if (success) {
-            context.sender().sendMessage(Message.join(
-                    Message.raw("Removed ").color(Color.YELLOW),
-                    Message.raw("-" + FoxPrisonPlugin.getInstance().getEconomyConfig().get().getCurrency(currency.getId()).format(amount)).color(new Color(255, 99, 71)),
-                    Message.raw(" | New balance: ").color(Color.GRAY),
-                    Message.raw(FoxPrisonPlugin.getInstance().getEconomyConfig().get().getCurrency(currency.getId()).format(newBalance)).color(Color.WHITE)
-            ));
-        } else {
-            context.sender().sendMessage(Message.raw("Insufficient funds").color(Color.RED));
-        }
-
-        return CompletableFuture.completedFuture(null);
+            if (success) {
+                context.sender().sendMessage(Message.join(
+                        Message.raw("Removed ").color(Color.YELLOW),
+                        Message.raw("-" + FoxPrisonPlugin.getInstance().getEconomyConfig().get().getCurrency(currency.getId()).format(amount)).color(new Color(255, 99, 71)),
+                        Message.raw(" | New balance: ").color(Color.GRAY),
+                        Message.raw(FoxPrisonPlugin.getInstance().getEconomyConfig().get().getCurrency(currency.getId()).format(newBalance)).color(Color.WHITE)
+                ));
+            } else {
+                context.sender().sendMessage(Message.raw("Insufficient funds").color(Color.RED));
+            }
+        }, world);
     }
 }

@@ -37,7 +37,7 @@ public abstract class AbstractAsyncEconomyAdminCommand extends AbstractAsyncComm
 
     @Override
     protected final @NotNull CompletableFuture<Void> executeAsync(@NotNull CommandContext ctx) {
-        var currencyID = currencyIdArg.get(ctx).isEmpty() ? economyManager.getDefaultCurrencyID() : currencyIdArg.get(ctx);
+        var currencyID = currencyIdArg.provided(ctx) ? currencyIdArg.get(ctx) : economyManager.getDefaultCurrencyID();
 
         CommandSender sender = ctx.sender();
         if (!(sender instanceof Player) && !targetPlayerArg.provided(ctx)) {

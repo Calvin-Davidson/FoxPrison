@@ -37,19 +37,21 @@ public class EcoSetCommand extends AbstractAsyncEconomyAdminCommand {
         }
 
         var store = targetRef.getStore();
+        var world = store.getExternalData().getWorld();
 
         PlayerRef playerRef = store.getComponent(targetRef, PlayerRef.getComponentType());
         if (playerRef == null) return CompletableFuture.completedFuture(null);
 
-        double oldBalance = getEconomyManager().getBalance(playerRef.getUuid(), currency.getId());
-        getEconomyManager().setBalance(playerRef.getUuid(), amount,"Admin set", currency.getId());
+        return CompletableFuture.runAsync(() -> {
+            double oldBalance = getEconomyManager().getBalance(playerRef.getUuid(), currency.getId());
+            getEconomyManager().setBalance(playerRef.getUuid(), amount,"Admin set", currency.getId());
 
-        context.sender().sendMessage(Message.join(
-                Message.raw("Balance set: ").color(Color.GREEN),
-                Message.raw(currency.format(oldBalance)).color(Color.GRAY),
-                Message.raw(" -> ").color(Color.WHITE),
-                Message.raw(currency.format(amount)).color(new Color(50, 205, 50))
-        ));
-        return CompletableFuture.completedFuture(null);
+            context.sender().sendMessage(Message.join(
+                    Message.raw("Balance set: ").color(Color.GREEN),
+                    Message.raw(currency.format(oldBalance)).color(Color.GRAY),
+                    Message.raw(" -> ").color(Color.WHITE),
+                    Message.raw(currency.format(amount)).color(new Color(50, 205, 50))
+            ));
+        }, world);
     }
 }

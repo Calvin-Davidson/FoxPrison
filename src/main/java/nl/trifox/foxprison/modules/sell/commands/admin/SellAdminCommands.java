@@ -35,13 +35,9 @@ public final class SellAdminCommands extends AbstractCommandCollection {
 
         addSubCommand(new SetPriceSub(config, economyManager));
         addSubCommand(new SumSub(config, economyManager));
-        // You can add more later (getprice, remove, list, reload, etc.)
     }
 
 
-    // -------------------------------------------------------------------------
-    // /selladmin setprice <price> [--item <id>] [--currency <id>] [--nosave]
-    // -------------------------------------------------------------------------
     private static final class SetPriceSub extends AbstractAsyncCommand {
 
         private final SellConfig sell;
@@ -90,7 +86,6 @@ public final class SellAdminCommands extends AbstractCommandCollection {
             SellPriceDefinition def = new SellPriceDefinition(price, currency);
             sell.setPrice(itemId, def);
 
-            // Save unless --nosave
             CompletableFuture<Void> saveFuture = noSaveFlag.get(context)
                     ? CompletableFuture.completedFuture(null)
                     : FoxPrisonPlugin.getInstance().getSellConfig().save();
@@ -165,24 +160,7 @@ public final class SellAdminCommands extends AbstractCommandCollection {
                 return CompletableFuture.completedFuture(null);
             }
 
-            // inventory (default)
             CombinedItemContainer everything = inv.getCombinedEverything();
-            everything.forEach((slot, stack) -> {
-                if (stack == null || stack.isEmpty()) return;
-
-                SellPriceDefinition def = sell.getPriceForItemId(stack.getItemId());
-                if (def == null || def.getPriceEach() <= 0.0) {
-                    // no price for this stack
-                    // (don’t spam per-stack)
-                    return;
-                }
-
-                // accumulate
-                // Note: doubles in lambda must be effectively final -> use holder
-            });
-
-            // Since we can't mutate primitives inside lambda cleanly without holders,
-            // do a second pass using explicit slot iteration:
             final short cap = everything.getCapacity();
             for (short slot = 0; slot < cap; slot++) {
                 ItemStack stack = everything.getItemStack(slot);
@@ -206,9 +184,6 @@ public final class SellAdminCommands extends AbstractCommandCollection {
         }
     }
 
-    // -------------------------------------------------------------------------
-    // helpers
-    // -------------------------------------------------------------------------
     private static String getHeldItemIdOrNull(CommandContext context) {
         if (!(context.sender() instanceof Player player)) return null;
 

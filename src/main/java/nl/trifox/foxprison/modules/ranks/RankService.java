@@ -97,9 +97,7 @@ public final class RankService implements PlayerRankService {
                 .thenApply(currentRankId -> indexOfRank(all, currentRankId) >= requiredIdx);
     }
 
-    /* =========================================================
-       Commands / mutations
-       ========================================================= */
+
 
     public CompletableFuture<Boolean> setRankByName(CommandSender sender, PlayerRef player, String rankId) {
         UUID uuid = player.getUuid();

@@ -156,9 +156,6 @@ public class SellAllCommand extends AbstractAsyncPlayerCommand {
                     return;
                 }
 
-
-                String msg = "Sold " + stacksSold + " stacks (" + itemsSold + " items) for $" + MONEY_FMT.format(total) + ".";
-
                 playerRef.sendMessage(Message.translation("foxPrison.sellall.success").param("stacksSold", stacksSold).param("currency", "money").param("total", total));
                 done.complete(null);
 

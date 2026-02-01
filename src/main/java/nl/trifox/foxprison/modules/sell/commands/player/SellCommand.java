@@ -7,6 +7,7 @@ import com.hypixel.hytale.server.core.command.system.basecommands.AbstractAsyncP
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+import nl.trifox.foxprison.FoxPrisonPlugin;
 import nl.trifox.foxprison.modules.economy.EconomyManager;
 import nl.trifox.foxprison.modules.sell.config.SellConfig;
 import nl.trifox.foxprison.modules.sell.config.SellPriceDefinition;
@@ -21,12 +22,9 @@ import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
 import com.hypixel.hytale.server.core.inventory.transaction.ItemStackSlotTransaction;
 
-import java.text.DecimalFormat;
 import java.util.UUID;
 
 public class SellCommand extends AbstractAsyncPlayerCommand {
-
-    private static final DecimalFormat MONEY_FMT = new DecimalFormat("#,##0.##");
 
     private final EconomyManager economyManager;
     private final SellConfig sellConfig;
@@ -56,7 +54,7 @@ public class SellCommand extends AbstractAsyncPlayerCommand {
             try {
                 Player player = store.getComponent(ref, Player.getComponentType());
                 if (player == null) {
-                    playerRef.sendMessage(Message.raw("You're not in a world."));
+                    playerRef.sendMessage(Message.translation("You're not in a world."));
                     done.complete(null);
                     return;
                 }
@@ -65,7 +63,7 @@ public class SellCommand extends AbstractAsyncPlayerCommand {
                 ItemStack inHand = inv.getItemInHand();
 
                 if (inHand == null || inHand.isEmpty()) {
-                    playerRef.sendMessage(Message.raw("You're not holding anything."));
+                    playerRef.sendMessage(Message.translation("foxPrison.sell.no_item_in_hand"));
                     done.complete(null);
                     return;
                 }
@@ -75,14 +73,14 @@ public class SellCommand extends AbstractAsyncPlayerCommand {
 
                 SellPriceDefinition price = sellConfig.getPriceForItemId(itemId);
                 if (price == null || !price.isAllowSell() || price.getPriceEach() <= 0.0) {
-                    playerRef.sendMessage(Message.raw("That item can't be sold."));
+                    playerRef.sendMessage(Message.translation("sell.fail.single").param("item_id", itemId));
                     done.complete(null);
                     return;
                 }
 
                 double total = price.getPriceEach() * qty;
                 if (total <= 0.0) {
-                    playerRef.sendMessage(Message.raw("That item can't be sold."));
+                    playerRef.sendMessage(Message.translation("sell.fail.single").param("item_id", itemId));
                     done.complete(null);
                     return;
                 }
@@ -94,32 +92,36 @@ public class SellCommand extends AbstractAsyncPlayerCommand {
 
                 if (usingToolsItem) {
                     container = inv.getTools();
-                    slot = (short) inv.getActiveToolsSlot();
+                    slot = inv.getActiveToolsSlot();
                 } else {
                     container = inv.getHotbar();
-                    slot = (short) inv.getActiveHotbarSlot();
+                    slot = inv.getActiveHotbarSlot();
                 }
 
-                // Remove the stack first (anti-dupe), then pay. Restore if payment fails.
                 ItemStackSlotTransaction tx = container.setItemStackForSlot(slot, ItemStack.EMPTY);
                 if (!tx.succeeded()) {
-                    playerRef.sendMessage(Message.raw("Couldn't remove the item from your hand."));
+                    playerRef.sendMessage(Message.translation("sell.fail.single").param("item_id", itemId));
                     done.complete(null);
                     return;
                 }
 
                 UUID uuid = playerRef.getUuid();
-                var depositOk = economyManager.deposit(uuid, total, "sellhand");
+                var depositOk = economyManager.deposit(uuid, total, "sellhand", price.getCurrency());
 
                 if (!depositOk) {
-                    // Restore item on failure
                     world.execute(() -> container.setItemStackForSlot(slot, inHand));
-                    playerRef.sendMessage(Message.raw("Sell failed. Your item was returned."));
+                    playerRef.sendMessage(Message.translation("foxPrison.sell.fail.single").param("item_id", inHand.getItemId()));
                     done.complete(null);
                     return;
                 }
 
-                playerRef.sendMessage(Message.raw("Sold " + qty + "x " + itemId + " for $" + MONEY_FMT.format(total) + "."));
+                var totalFormatted = FoxPrisonPlugin.getInstance().getEconomyConfig().get().getCurrency(price.getCurrency()).format(total);
+                playerRef.sendMessage(Message.translation("foxPrison.sell.success.single")
+                        .param("quantity", qty)
+                        .param("item_id", itemId)
+                        .param("currency_id", price.getCurrency())
+                        .param("total", totalFormatted));
+
                 done.complete(null);
 
             } catch (Throwable t) {

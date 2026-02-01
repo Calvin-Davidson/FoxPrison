@@ -1,0 +1,122 @@
+# =========================
+# FoxPrison - Language File
+# =========================
+
+# -------------------------
+# Prefix / Common
+# -------------------------
+no_permission=You don't have permission to do that.
+player_only=This command can only be used by players.
+console_only=This command can only be used from console.
+invalid_number=Invalid number: {input}
+invalid_amount=Invalid amount: {input}
+invalid_currency=Unknown currency: {currency}
+feature_disabled=This feature is currently disabled.
+internal_error=An internal error occurred. Please contact staff.
+target_not_found=Player not found
+must_be_positive=Value must be positive.
+cooldown=You must wait {timeout_seconds}s before doing that again.
+cant_target_self_console=Cannot target self as you are not a player
+
+# -------------------------
+# Economy / Balances
+# -------------------------
+economy.not_available=Economy not available.
+
+economy.balance.self=Your balance: {currency} {amount}
+economy.balance.other={player}'s balance: {currency} {amount}
+
+economy.balance.multi_header=Your balances:
+
+economy.deposit.success.self=You received {currency} {amount}.
+economy.deposit.success.other=Gave {currency} {amount} to {player}.
+
+economy.withdraw.success.self=You paid {currency} {amount}.
+economy.withdraw.success.other=Took {currency} {amount} from {player}.
+
+economy.transfer.success=Sent {currency} {amount} to {player}.
+economy.transfer.fail.self=Transfer failed: {reason}
+
+economy.insufficient_funds=Not enough {currency}. Need: {required} (You have: {current})
+
+economy.set.success=Set {player}'s {currency} to {amount}.
+economy.add.success=Added {currency} {amount} to {player}.
+economy.remove.success=Removed {currency} {amount} from {player}.
+
+economy.currency_list.header=Available currencies:
+economy.currency_reload.success=Reloaded economy configuration.
+
+# -------------------------
+# Ranks
+# -------------------------
+ranks.current=Your rank: {rank}
+ranks.current.other={player}'s rank: {rank}
+
+ranks.max_rank=You are max rank.
+ranks.not_exist=Rank {rank} does not exist
+
+ranks.rankup.success=Ranked up to {rank}!
+ranks.rankup.cost=Rank up cost: {currency} {amount}
+ranks.rankup.not_enough=Not enough money to rank up. Need: {currency} {amount}
+ranks.rankup.economy_missing=Economy not available.
+
+ranks.rankup.next=Next rank: {rank} ({currency} {amount})
+ranks.rankup.requirement.mine_locked=You must unlock mine {mine} first.
+
+ranks.rank_set.success=Set {player}'s rank to {rank}.
+ranks.rank_set.fail_unknown=Unknown rank id: {rank}
+
+ranks.rank_list.header=Available ranks:
+ranks.rank_list.entry= - {rank} (Cost: {currency} {amount})
+
+ranks.reload.success=Reloaded ranks configuration.
+
+# -------------------------
+# Mines
+# -------------------------
+mines.not_found=Mine not found: {mine}
+
+mines.teleport.success=Teleporting to mine {mine}...
+mines.teleport.fail=Couldn't teleport to mine {mine}.
+mines.teleport.locked=You haven't unlocked mine {mine}.
+
+mines.reset.started=Resetting mine {mine}...
+mines.reset.completed=Mine {mine} has been reset.
+mines.reset.failed=Failed to reset mine {mine}.
+mines.reset.cooldown=Mine {mine} can't be reset yet. Try again in {seconds}s.
+mines.reset.auto_broadcast=Mine {mine} has been automatically reset.
+
+mines.blocks_broken.stat=Blocks broken in mine {mine}: {blocks}
+
+# -------------------------
+# Selling
+# -------------------------
+sell.no_item_in_hand=You must hold an item to sell.
+sell.item_not_sellable=This item cannot be sold.
+
+sell.price_line=Sell price: {currency} {price} (x{multiplier} multiplier)
+
+sell.success.single=Sold {quantity}x {item_id} for {currency} {total}.
+sell.fail.single=Could not sell {item_id}.
+
+sellall.started=Selling your inventory...
+sellall.success=Sold {items_count} items for {currency} {total}.
+sellall.nothing_to_sell=You have nothing to sell.
+sellall.fail=Sellall failed. Please try again.
+
+# -------------------------
+# Sell Admin
+# -------------------------
+selladmin.header=Sell Admin
+
+selladmin.setprice.success=Set sell price for {item} to {currency} {price}.
+selladmin.setprice.fail_item=Invalid item. Hold the item you want to set a price for.
+selladmin.setprice.fail_amount=Invalid price: {price}
+
+selladmin.removeprice.success=Removed sell price for {item}.
+selladmin.removeprice.not_found=No sell price found for {item}.
+
+selladmin.reload.success=Reloaded sell prices.
+
+selladmin.list.header=Sell prices:
+selladmin.list.entry= - {item}: {currency} {price}

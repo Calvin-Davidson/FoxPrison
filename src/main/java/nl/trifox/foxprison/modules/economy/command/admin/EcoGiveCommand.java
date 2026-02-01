@@ -27,7 +27,7 @@ public class EcoGiveCommand extends AbstractAsyncEconomyAdminCommand {
     protected CompletableFuture<Void> executeAsync(@NotNull CommandContext context, Ref<EntityStore> targetRef, CurrencyDefinition currency) {
         Double amount = amountArg.get(context);
         if (amount == null || amount <= 0) {
-            context.sendMessage(Message.raw("Amount must be positive").color(Color.RED));
+            context.sendMessage(Message.translation("foxPrison.must_be_positive").color(Color.RED));
             return CompletableFuture.completedFuture(null);
         }
 

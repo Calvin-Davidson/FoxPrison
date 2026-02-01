@@ -30,7 +30,6 @@ public abstract class AbstractAsyncEconomyAdminCommand extends AbstractAsyncComm
         this.currencyIdArg = this.withOptionalArg("currencyId", "the currency you want to set", ArgTypes.STRING);
         this.targetPlayerArg = this.withOptionalArg("targetPlayer", "which player you want to set", ArgTypes.PLAYER_REF);
         this.economyManager = FoxPrisonPlugin.getEconomyModule().getEconomyManager();
-
     }
 
     @Override
@@ -39,13 +38,13 @@ public abstract class AbstractAsyncEconomyAdminCommand extends AbstractAsyncComm
 
         CommandSender sender = ctx.sender();
         if (!(sender instanceof Player) && !targetPlayerArg.provided(ctx)) {
-            ctx.sendMessage(Message.raw("Cannot target self as you are not a player").color(Color.RED));
+            ctx.sendMessage(Message.translation("foxPrison.cant_target_self_console").color(Color.RED));
             return CompletableFuture.completedFuture(null);
         }
 
         var targetRef = targetPlayerArg.provided(ctx) ? targetPlayerArg.get(ctx).getReference() : ctx.senderAsPlayerRef();
         if (targetRef == null) {
-            sender.sendMessage(Message.raw("invalid player target"));
+            sender.sendMessage(Message.translation("foxPrison.target_not_found"));
             return CompletableFuture.completedFuture(null);
         }
         var config = FoxPrisonPlugin.getInstance().getEconomyConfig();

@@ -78,15 +78,13 @@ public class SellAllCommand extends AbstractAsyncPlayerCommand {
                 }
 
                 Inventory inv = player.getInventory();
-
-                // Decide which containers to scan (defaults from SellConfig)
                 SellAllDefinition s = sellConfig.getSellAll();
 
                 List<ItemContainer> containers = new ArrayList<>();
                 if (s.isIncludeHotbar()) containers.add(inv.getHotbar());
                 if (s.isIncludeMainInventory()) containers.add(inv.getStorage());
                 if (s.isIncludeEquipment()) containers.add(inv.getArmor());
-                if (s.isIncludeOffhand()) containers.add(inv.getUtility()); // "utility" is the closest to offhand
+                if (s.isIncludeOffhand()) containers.add(inv.getUtility());
 
                 List<SlotSell> toSell = new ArrayList<>();
                 int stacksSold = 0;
@@ -123,7 +121,7 @@ public class SellAllCommand extends AbstractAsyncPlayerCommand {
                 }
 
                 if (toSell.isEmpty() || total <= 0.0) {
-                    playerRef.sendMessage(Message.raw("Nothing to sell."));
+                    playerRef.sendMessage(Message.translation("foxPrison.sellall.nothing_to_sell"));
                     done.complete(null);
                     return;
                 }
@@ -137,7 +135,7 @@ public class SellAllCommand extends AbstractAsyncPlayerCommand {
                         for (SlotSell r : removed) {
                             r.container.setItemStackForSlot(r.slot, r.original);
                         }
-                        playerRef.sendMessage(Message.raw("SellAll failed (couldn't remove items)."));
+                        playerRef.sendMessage(Message.translation("foxPrison.sellall.fail"));
                         done.complete(null);
                         return;
                     }
@@ -153,14 +151,15 @@ public class SellAllCommand extends AbstractAsyncPlayerCommand {
                             r.container.setItemStackForSlot(r.slot, r.original);
                         }
                     });
-                    playerRef.sendMessage(Message.raw("SellAll failed. Your items were returned."));
+                    playerRef.sendMessage(Message.translation("foxPrison.sellall.fail"));
                     done.complete(null);
                     return;
                 }
 
+
                 String msg = "Sold " + stacksSold + " stacks (" + itemsSold + " items) for $" + MONEY_FMT.format(total) + ".";
 
-                playerRef.sendMessage(Message.raw(msg));
+                playerRef.sendMessage(Message.translation("foxPrison.sellall.success").param("stacksSold", stacksSold).param("currency", "money").param("total", total));
                 done.complete(null);
 
             } catch (Throwable t) {

@@ -106,7 +106,7 @@ public final class RankService implements PlayerRankService {
 
         var optionalRank = ranksConfig.get().getRank(rankId);
         if (optionalRank.isEmpty()) {
-            sender.sendMessage(Message.raw("Rank " + rankId + " does not exist!"));
+            sender.sendMessage(Message.translation("ranks.not_exist").param("rank", rankId));
             return CompletableFuture.completedFuture(false);
         }
 
@@ -116,7 +116,9 @@ public final class RankService implements PlayerRankService {
             data.setRankId(normalized);
             return data;
         }).thenApply(updated -> {
-            sender.sendMessage(Message.raw("Rank set for user " + player.getUsername()));
+            sender.sendMessage(Message.translation("foxPrison.ranks.rank_set.success")
+                    .param("player", player.getUsername())
+                    .param("rank", rankId));
             return true;
         });
     }

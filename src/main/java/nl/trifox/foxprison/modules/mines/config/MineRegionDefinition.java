@@ -4,6 +4,7 @@ import com.hypixel.hytale.codec.Codec;
 import com.hypixel.hytale.codec.KeyedCodec;
 import com.hypixel.hytale.codec.builder.BuilderCodec;
 import com.hypixel.hytale.codec.codecs.array.ArrayCodec;
+import com.hypixel.hytale.math.vector.Vector3d;
 
 public class MineRegionDefinition {
 
@@ -27,6 +28,10 @@ public class MineRegionDefinition {
         for (BoxRegionDefinition box : boxes) {
             if (box.contains(x, y, z)) return true;
         }
-        return false; // do implement
+        return false;
+    }
+
+    public Boolean contains(Vector3d position) {
+        return contains(position.toVector3i().getX(), position.toVector3i().getY(), position.toVector3i().getZ());
     }
 }

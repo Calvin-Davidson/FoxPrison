@@ -156,7 +156,7 @@ public class SellAllCommand extends AbstractAsyncPlayerCommand {
                     return;
                 }
 
-                playerRef.sendMessage(Message.translation("foxPrison.sellall.success").param("stacksSold", stacksSold).param("currency", "money").param("total", total));
+                playerRef.sendMessage(Message.translation("foxPrison.sellall.success").param("items_count", stacksSold).param("currency", "money").param("total", total));
                 done.complete(null);
 
             } catch (Throwable t) {

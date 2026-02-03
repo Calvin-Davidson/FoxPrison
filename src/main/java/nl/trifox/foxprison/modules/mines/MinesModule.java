@@ -6,6 +6,9 @@ import nl.trifox.foxprison.framework.module.FoxModule;
 import nl.trifox.foxprison.modules.mines.commands.admin.MineCommands;
 import nl.trifox.foxprison.modules.mines.commands.player.MineCommand;
 import nl.trifox.foxprison.modules.mines.events.MineBlockBreakEvent;
+import nl.trifox.foxprison.modules.mines.events.MineItemRemoveSystem;
+import nl.trifox.foxprison.modules.mines.events.MineWorldBlockBreakProtectionSystem;
+import nl.trifox.foxprison.modules.mines.events.MineWorldBlockDamageProtectionSystem;
 import nl.trifox.foxprison.modules.ranks.RankModule;
 import nl.trifox.foxprison.modules.ranks.command.player.RankUpCommand;
 
@@ -27,6 +30,10 @@ public final class MinesModule implements FoxModule {
     public void start() {
         this.mineService = new MineService(plugin.getCoreConfig(), plugin.getMinesConfig(), playerRankService);
         plugin.getEntityStoreRegistry().registerSystem(new MineBlockBreakEvent(mineService));
+        plugin.getEntityStoreRegistry().registerSystem(new MineWorldBlockBreakProtectionSystem(mineService));
+        plugin.getEntityStoreRegistry().registerSystem(new MineWorldBlockDamageProtectionSystem(mineService));
+        plugin.getEntityStoreRegistry().registerSystem(new MineItemRemoveSystem(mineService));
+
 
         mineService.startAutoResetLoop(plugin.getTaskRegistry());
 
@@ -35,7 +42,6 @@ public final class MinesModule implements FoxModule {
         var registry = plugin.getCommandRegistry();
         registry.registerCommand(new MineCommand(mineService));
         registry.registerCommand(new MineCommands(mineService, ranks));
-
         registry.registerCommand(new RankUpCommand(ranks));
     }
 

@@ -35,7 +35,7 @@ public class RankCommand extends AbstractAsyncPlayerCommand {
                 return CompletableFuture.completedFuture(null);
             }
 
-            playerRef.sendMessage(Message.translation("ranks.current").param("rank", optionalRank.get().getDisplayName()));
+            playerRef.sendMessage(Message.translation("foxPrison.ranks.current").param("rank", optionalRank.get().getDisplayName()));
             return CompletableFuture.completedFuture(null);
         });
     }

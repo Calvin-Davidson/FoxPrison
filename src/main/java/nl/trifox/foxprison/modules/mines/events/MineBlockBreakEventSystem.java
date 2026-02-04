@@ -65,7 +65,7 @@ public class MineBlockBreakEventSystem extends EntityEventSystem<EntityStore, Br
             if (blockType == null) return;
 
             var inv = player.getInventory();
-            if (inv != null) {
+            if (inv != null && blockType.getGathering() != null && blockType.getGathering().getBreaking() != null) {
                 var drops = getDrops(blockType, 1, null, blockType.getGathering().getBreaking().getDropListId());
 
                 if (inv.getCombinedBackpackStorageHotbar().canAddItemStacks(drops)) {

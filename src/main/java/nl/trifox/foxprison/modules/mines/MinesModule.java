@@ -5,7 +5,7 @@ import nl.trifox.foxprison.api.interfaces.PlayerRankService;
 import nl.trifox.foxprison.framework.module.FoxModule;
 import nl.trifox.foxprison.modules.mines.commands.admin.MineCommands;
 import nl.trifox.foxprison.modules.mines.commands.player.MineCommand;
-import nl.trifox.foxprison.modules.mines.events.MineBlockBreakEvent;
+import nl.trifox.foxprison.modules.mines.events.MineBlockBreakEventSystem;
 import nl.trifox.foxprison.modules.mines.events.MineItemRemoveSystem;
 import nl.trifox.foxprison.modules.mines.events.MineWorldBlockBreakProtectionSystem;
 import nl.trifox.foxprison.modules.mines.events.MineWorldBlockDamageProtectionSystem;
@@ -29,7 +29,7 @@ public final class MinesModule implements FoxModule {
     @Override
     public void start() {
         this.mineService = new MineService(plugin.getCoreConfig(), plugin.getMinesConfig(), playerRankService);
-        plugin.getEntityStoreRegistry().registerSystem(new MineBlockBreakEvent(mineService));
+        plugin.getEntityStoreRegistry().registerSystem(new MineBlockBreakEventSystem(mineService));
         plugin.getEntityStoreRegistry().registerSystem(new MineWorldBlockBreakProtectionSystem(mineService));
         plugin.getEntityStoreRegistry().registerSystem(new MineWorldBlockDamageProtectionSystem(mineService));
         plugin.getEntityStoreRegistry().registerSystem(new MineItemRemoveSystem(mineService));

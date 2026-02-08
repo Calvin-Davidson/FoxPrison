@@ -16,7 +16,7 @@ public class MineListCommand extends AbstractCommand {
 
     public MineListCommand(MineService service) {
         super("list", "List configured mines");
-        requirePermission("nl.trifox.foxprison.admin");
+        requirePermission("foxprison.mine.command.admin.list");
         this.service = service;
         addAliases("mines");
     }

@@ -21,6 +21,7 @@ public  class EcoTakeCommand extends AbstractAsyncEconomyAdminCommand {
         super("take", "Remove money from your balance");
         this.addAliases("remove");
         this.amountArg = this.withRequiredArg("amount", "The amount to remove", ArgTypes.DOUBLE);
+        requirePermission("foxprison.eco.command.take");
 
     }
 

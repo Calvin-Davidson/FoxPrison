@@ -24,6 +24,8 @@ public class MineCommand extends AbstractAsyncPlayerCommand {
         super("mine", "Teleport to your mine (or a mine by id)");
         this.service = service;
         this.mineArg = withOptionalArg("mine", "Mine id", ArgTypes.STRING);
+
+        requirePermission("foxprison.mines.command.mine");
     }
 
     @NonNullDecl

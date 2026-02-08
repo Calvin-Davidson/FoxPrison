@@ -21,6 +21,7 @@ public class EcoGiveCommand extends AbstractAsyncEconomyAdminCommand {
         super("give", "Add money to your balance");
         this.addAliases("add");
         this.amountArg = this.withRequiredArg("amount", "The amount to add", ArgTypes.DOUBLE);
+        requirePermission("foxprison.eco.command.give");
     }
 
     @Override

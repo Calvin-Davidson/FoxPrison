@@ -20,6 +20,7 @@ public class MineResetCommand extends AbstractAsyncCommand {
         this.service = service;
 
         mineId = withRequiredArg("mineId", "Mine id", ArgTypes.STRING);
+        requirePermission("foxprison.mine.command.admin.reset");
 
     }
 

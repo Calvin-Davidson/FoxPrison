@@ -22,7 +22,7 @@ public final class MineAutoResetSetCommand extends AbstractCommand {
 
     public MineAutoResetSetCommand(MineService service) {
         super("set", "Set mine auto reset settings");
-        requirePermission("nl.trifox.foxprison.admin");
+        requirePermission("foxprison.mine.command.admin.autoreset.set");
 
         this.service = service;
 

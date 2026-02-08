@@ -25,6 +25,8 @@ public class PayCommand extends AbstractAsyncPlayerCommand {
         super("pay", "pay balance to a playrer");
         this.amountArg = this.withRequiredArg("amount", "The amount to remove", ArgTypes.DOUBLE);
         this.targetPlayerArg = this.withRequiredArg("target player", "The player whom will receive this balance", ArgTypes.PLAYER_REF);
+
+        this.requirePermission("foxprison.eco.command.pay");
     }
 
     @Override

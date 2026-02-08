@@ -23,9 +23,9 @@ public class MineTpCommand extends AbstractAsyncPlayerCommand {
 
     public MineTpCommand(MineService service) {
         super("minetp", "Teleport to a mine");
-        requirePermission("nl.trifox.foxprison.admin");
         this.service = service;
         this.mineArg = withRequiredArg("mineId", "Mine id", ArgTypes.STRING);
+        requirePermission("foxprison.mine.command.admin.minetp");
     }
 
 

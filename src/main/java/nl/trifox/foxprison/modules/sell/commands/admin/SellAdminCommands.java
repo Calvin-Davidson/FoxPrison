@@ -29,8 +29,7 @@ public final class SellAdminCommands extends AbstractCommandCollection {
 
     public SellAdminCommands(@Nonnull SellConfig config, @Nonnull EconomyManager economyManager) {
         super("selladmin", "Admin: manage /sell prices");
-        requirePermission("foxprison.sell.admin");
-
+        requirePermission("foxprison.sell.command.selladmin");
         addAliases("sa");
 
         addSubCommand(new SetPriceSub(config, economyManager));

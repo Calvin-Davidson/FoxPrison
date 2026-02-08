@@ -7,6 +7,7 @@ public class MineAutoResetCommands extends AbstractCommandCollection {
 
     public MineAutoResetCommands(MineService service) {
         super("autoreset", "modify autoreset settings");
+        requirePermission("foxprison.mine.command.admin.autoreset");
 
         addSubCommand(new MineAutoResetSetCommand(service));
     }

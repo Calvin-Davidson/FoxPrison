@@ -19,6 +19,7 @@ public class MineDeleteCommand extends AbstractCommand {
         super("delete", "Delete a mine");
         this.service = service;
         this.idArg = withRequiredArg("id", "Mine id", ArgTypes.STRING);
+        requirePermission("foxprison.mine.command.admin.delete");
     }
 
     @Override

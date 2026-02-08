@@ -19,6 +19,7 @@ public class EcoSetCommand extends AbstractAsyncEconomyAdminCommand {
     public EcoSetCommand() {
         super("set", "Set your balance to a specific amount");
         this.amountArg = this.withRequiredArg("amount", "The amount to set", ArgTypes.DOUBLE);
+        requirePermission("foxprison.eco.command.set");
     }
 
     @Override

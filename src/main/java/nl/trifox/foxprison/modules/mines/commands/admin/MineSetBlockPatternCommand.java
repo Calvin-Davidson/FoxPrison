@@ -26,6 +26,7 @@ public class MineSetBlockPatternCommand extends AbstractAsyncPlayerCommand {
     public MineSetBlockPatternCommand(MineService service) {
         super("setpattern", "Change the blockpattern of a mine");
         this.service = service;
+        requirePermission("foxprison.mine.command.admin.setpattern");
 
         mineId = withRequiredArg("mineId", "Mine id", ArgTypes.STRING);
         blockPattern = withRequiredArg("blockTypeId", "Block type id (e.g. hytale:stone)", ArgTypes.BLOCK_PATTERN);

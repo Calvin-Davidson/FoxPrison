@@ -33,6 +33,7 @@ public class SellCommand extends AbstractAsyncPlayerCommand {
         super("sell", "sell the item in your hand");
         this.economyManager = economyManager;
         this.sellConfig = sellConfig;
+        requirePermission("foxprison.sell.command.sell");
     }
 
     @Override

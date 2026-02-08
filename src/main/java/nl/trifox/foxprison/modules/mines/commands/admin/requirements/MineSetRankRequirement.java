@@ -22,7 +22,7 @@ public class MineSetRankRequirement extends AbstractAsyncCommand {
 
     public MineSetRankRequirement(MineService mineService, RankService rankService) {
         super("setRequiredRank", "Sets the allowed ranks for a mine");
-
+        requirePermission("foxprison.mine.command.admin.requirements.setrank");
         this.mineService = mineService;
 
         this.mineId = this.withRequiredArg("mineId", "the mine you want to edit", ArgTypes.STRING);

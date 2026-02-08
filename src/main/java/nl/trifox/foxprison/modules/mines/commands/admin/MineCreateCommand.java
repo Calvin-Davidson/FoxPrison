@@ -31,6 +31,7 @@ public class MineCreateCommand extends AbstractAsyncPlayerCommand {
 
         idArg = withRequiredArg("id", "Mine id", ArgTypes.STRING);
         nameArg = withRequiredArg("name", "Display name", ArgTypes.STRING);
+        requirePermission("foxprison.mine.command.admin.create");
     }
 
 

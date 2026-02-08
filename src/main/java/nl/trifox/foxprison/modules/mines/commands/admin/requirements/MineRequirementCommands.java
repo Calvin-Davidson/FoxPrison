@@ -8,7 +8,7 @@ public class MineRequirementCommands extends AbstractCommandCollection {
 
     public MineRequirementCommands(MineService mineService, RankService rankService) {
         super("requirement", "allows editing mine requirements");
-
+        requirePermission("foxprison.mine.command.admin.requirements");
         addSubCommand(new MineSetRankRequirement(mineService, rankService));
     }
 }

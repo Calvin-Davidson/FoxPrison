@@ -21,6 +21,8 @@ public class BalanceCommand extends AbstractAsyncPlayerCommand {
         super("bal", "Check your balance");
         this.addAliases("balance", "money");
         this.setPermissionGroup(GameMode.Adventure);
+
+        this.requirePermission("foxprison.eco.command.balance");
     }
 
     @Override

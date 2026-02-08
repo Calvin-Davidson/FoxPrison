@@ -23,6 +23,7 @@ public class RegionClearCommand extends AbstractAsyncPlayerCommand {
     public RegionClearCommand(MineService service) {
         super("clear", "Clear all boxes from a mine region");
         this.service = service;
+        requirePermission("foxprison.mine.command.admin.region.clear");
 
         mineId = withRequiredArg("mineId", "Mine id", ArgTypes.STRING);
     }

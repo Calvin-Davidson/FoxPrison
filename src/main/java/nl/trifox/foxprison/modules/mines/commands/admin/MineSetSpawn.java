@@ -30,6 +30,7 @@ public class MineSetSpawn extends AbstractAsyncPlayerCommand {
     public MineSetSpawn(MineService service) {
         super("setspawn", "set's the mine spawn to the current player position and rotation");
         this.service = service;
+        requirePermission("foxprison.mine.command.admin.setspawn");
 
         idArg = withRequiredArg("id", "Mine id", ArgTypes.STRING);
     }

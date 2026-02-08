@@ -37,6 +37,7 @@ public class SellAllCommand extends AbstractAsyncPlayerCommand {
         super("sellall", "auto sell your entire inventory");
         this.economyManager = economyManager;
         this.sellConfig = sellConfig;
+        requirePermission("foxprison.sell.command.sellall");
     }
 
     private static final class SlotSell {

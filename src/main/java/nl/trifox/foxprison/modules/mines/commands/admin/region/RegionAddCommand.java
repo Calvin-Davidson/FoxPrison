@@ -27,6 +27,7 @@ public class RegionAddCommand extends AbstractAsyncPlayerCommand {
     public RegionAddCommand(MineService service) {
         super("add", "adds the current selected region to the mine");
         this.service = service;
+        requirePermission("foxprison.mine.command.admin.region.add");
 
         idArg = withRequiredArg("id", "Mine id", ArgTypes.STRING);
     }

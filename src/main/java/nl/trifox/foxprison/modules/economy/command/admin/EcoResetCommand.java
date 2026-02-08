@@ -15,6 +15,7 @@ import java.util.concurrent.CompletableFuture;
 public class EcoResetCommand extends AbstractAsyncEconomyAdminCommand {
     public EcoResetCommand() {
         super("reset", "Reset balance to starting amount");
+        requirePermission("foxprison.eco.command.reset");
     }
 
 

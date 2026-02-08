@@ -12,6 +12,7 @@ import java.util.concurrent.CompletableFuture;
 public class EcoSaveCommand extends AbstractAsyncCommand {
     public EcoSaveCommand() {
         super("save", "Force save all data");
+        requirePermission("foxprison.eco.command.save");
     }
 
     @NonNullDecl

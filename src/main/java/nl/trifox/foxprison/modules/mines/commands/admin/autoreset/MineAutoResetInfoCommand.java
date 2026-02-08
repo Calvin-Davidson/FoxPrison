@@ -18,7 +18,7 @@ public final class MineAutoResetInfoCommand extends AbstractCommand {
 
     public MineAutoResetInfoCommand(MineService service) {
         super("info", "Show autoreset settings for a mine");
-        requirePermission("nl.trifox.foxprison.admin");
+        requirePermission("foxprison.mine.command.admin.autoreset.info");
 
         this.service = service;
         this.mineId = withRequiredArg("mineId", "Mine id", ArgTypes.STRING);

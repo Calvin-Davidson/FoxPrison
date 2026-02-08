@@ -1,6 +1,6 @@
 # 🦊 FoxPrison
 
-**FoxPrison** is a **premium prison-style plugin for Hytale**, built for performance, configurability, and long-term progression.  
+**FoxPrison** is a **prison-style plugin for Hytale**, built for performance, configurability, and long-term progression.  
 It provides all essential prison mechanics while remaining lightweight, extensible, and server-owner friendly.
 
 ---
@@ -8,10 +8,10 @@ It provides all essential prison mechanics while remaining lightweight, extensib
 ## ✨ Features
 
 ### ⛏ Core Prison Systems
-- Rank-based progression (A → Z, Prestige, or fully custom)
+- Rank-based progression (A → Z, or fully custom)
 - Mine regions with automatic reset support
 - Block value system (configurable per mine)
-- Sell system (signs, commands, NPC hooks)
+- Sell system (commands)
 - Player balance & economy integration
 
 ---
@@ -27,17 +27,14 @@ It provides all essential prison mechanics while remaining lightweight, extensib
 
 ### 💰 Economy
 - Sell-all command
-- Sell signs / NPC support
 - Block value configuration
-- Vault-style economy abstraction (future-proof)
+- VaultUnlocked economy support
 
 ---
 
 ### 🎒 Player Progression
 - Rank-up system
-- Prestige support (optional)
 - Custom rank costs
-- Progress tracking & statistics
 
 ---
 

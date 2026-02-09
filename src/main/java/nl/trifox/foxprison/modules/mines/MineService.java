@@ -385,7 +385,6 @@ public class MineService {
     private int mineTier(MineDefinition mine) {
         MineRequirementsDefinition req = mine.getRequirements();
         if (req == null) return 0;
-
         return mine.getOrder();
     }
 }

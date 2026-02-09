@@ -71,12 +71,13 @@ public class FoxPrisonPlugin extends JavaPlugin {
     protected void setup() {
         storageModule = new StorageModule(this, coreConfig.get());
         economyModule = new EconomyModule(this, storageModule);
+        storageModule.start();
+        economyModule.start();
+
         rankModule    = new RankModule(this, storageModule, economyModule);
         mineModule    = new MinesModule(this, rankModule, rankModule.getRankService());
         sellModule    = new SellModule(this, economyModule, sellConfig.get());
 
-        storageModule.start();
-        economyModule.start();
         rankModule.start();
         mineModule.start();
         sellModule.start();;

@@ -26,7 +26,7 @@ public class MineRequirementsDefinition {
     }
 
     public String[] getAllowedRanks() {
-        return allowedRanks;
+        return allowedRanks == null ? new String[0] : allowedRanks;
     }
 
     public void setAllowedRanks(String[] allowedRanks) {

@@ -1,12 +1,14 @@
 package nl.trifox.foxprison.modules.sell;
 
 import nl.trifox.foxprison.FoxPrisonPlugin;
+import nl.trifox.foxprison.api.events.mines.MineDropsEvent;
 import nl.trifox.foxprison.framework.module.FoxModule;
 import nl.trifox.foxprison.modules.economy.EconomyModule;
 import nl.trifox.foxprison.modules.sell.commands.admin.SellAdminCommands;
 import nl.trifox.foxprison.modules.sell.commands.player.SellAllCommand;
 import nl.trifox.foxprison.modules.sell.commands.player.SellCommand;
 import nl.trifox.foxprison.modules.sell.config.SellConfig;
+import nl.trifox.foxprison.modules.sell.listeners.AutoSellEventListener;
 
 public class SellModule implements FoxModule {
 
@@ -22,6 +24,9 @@ public class SellModule implements FoxModule {
     }
     @Override
     public void start() {
+        var sellService = new SellService(economyModule.getEconomyManager(), sellConfig);
+        var autoSellListener = new AutoSellEventListener(sellService);
+
         if (sellConfig.isSellEnabled()) {
             foxPrisonPlugin.getCommandRegistry().registerCommand(new SellCommand(economyModule.getEconomyManager(), sellConfig));
         }
@@ -31,6 +36,10 @@ public class SellModule implements FoxModule {
         }
 
         foxPrisonPlugin.getCommandRegistry().registerCommand(new SellAdminCommands(sellConfig, economyModule.getEconomyManager()));
+
+        if (sellConfig.isAutoSellEnabled()) {
+            foxPrisonPlugin.getEventRegistry().register(MineDropsEvent.class, autoSellListener::handleMineDrops);
+        }
     }
 
     @Override

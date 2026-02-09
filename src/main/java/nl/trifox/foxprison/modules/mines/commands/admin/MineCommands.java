@@ -9,7 +9,7 @@ import nl.trifox.foxprison.modules.ranks.RankService;
 
 public class MineCommands extends AbstractCommandCollection {
     public MineCommands(MineService mineService, RankService rankService) {
-        super("mine", "Mine management");
+        super("mineadmin", "Mine management");
         requirePermission("foxprison.mine.command.admin");
 
         addSubCommand(new MineRegionCommand(mineService));

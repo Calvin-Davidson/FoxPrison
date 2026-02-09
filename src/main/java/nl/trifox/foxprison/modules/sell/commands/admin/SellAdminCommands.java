@@ -14,6 +14,7 @@ import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.inventory.container.CombinedItemContainer;
 import nl.trifox.foxprison.FoxPrisonPlugin;
 import nl.trifox.foxprison.modules.economy.EconomyManager;
+import nl.trifox.foxprison.modules.sell.config.AutoSellDefinition;
 import nl.trifox.foxprison.modules.sell.config.SellConfig;
 import nl.trifox.foxprison.modules.sell.config.SellPriceDefinition;
 
@@ -34,6 +35,7 @@ public final class SellAdminCommands extends AbstractCommandCollection {
 
         addSubCommand(new SetPriceSub(config, economyManager));
         addSubCommand(new SumSub(config, economyManager));
+        addSubCommand(new ToggleAutoSell(config, economyManager));
     }
 
 
@@ -52,7 +54,7 @@ public final class SellAdminCommands extends AbstractCommandCollection {
             this.sell = Objects.requireNonNull(sell);
             this.economyManager = economyManager;
 
-            requirePermission("foxprison.sell.admin.setprice");
+            requirePermission("foxprison.sell.command.selladmin.setprice");
 
             priceArg = withRequiredArg("price", "Price per item", ArgTypes.DOUBLE);
             itemArg = withOptionalArg("item", "ItemId (if omitted, uses item in hand)", ArgTypes.STRING);
@@ -113,11 +115,8 @@ public final class SellAdminCommands extends AbstractCommandCollection {
 
         private SumSub(SellConfig sell, EconomyManager economyManager) {
             super("sum", "Show total sell value (hand or inventory)");
+            requirePermission("foxprison.sell.command.selladmin.sum");
             this.sell = Objects.requireNonNull(sell);
-
-
-            requirePermission("foxprison.sell.admin.sum");
-
             scopeArg = withOptionalArg("scope", "hand|inventory (default: inventory)", ArgTypes.STRING);
         }
 
@@ -182,6 +181,54 @@ public final class SellAdminCommands extends AbstractCommandCollection {
             return CompletableFuture.completedFuture(null);
         }
     }
+
+    private static final class ToggleAutoSell extends AbstractAsyncCommand {
+
+        private final SellConfig sell;
+
+        private ToggleAutoSell(SellConfig sell, EconomyManager economyManager) {
+            super("autosell", "Toggle auto sell on the currently held tool");
+            requirePermission("foxprison.sell.command.selladmin.autosell");
+            this.sell = Objects.requireNonNull(sell);
+        }
+
+        @Override
+        @Nonnull
+        protected CompletableFuture<Void> executeAsync(@Nonnull CommandContext context) {
+            if (!(context.sender() instanceof Player player)) {
+                context.sender().sendMessage(Message.raw("This command is player-only."));
+                return CompletableFuture.completedFuture(null);
+            }
+
+            Inventory inv = player.getInventory();
+
+            ItemStack held = inv.getItemInHand();
+            if (held == null || held.isEmpty()) {
+                player.sendMessage(Message.raw("You're not holding anything."));
+                return CompletableFuture.completedFuture(null);
+            }
+
+            var autoSell = held.getFromMetadataOrNull("AutoSell", AutoSellDefinition.CODEC);
+            if (autoSell == null) {
+                ItemStack updated = held.withMetadata("AutoSell", AutoSellDefinition.CODEC, new AutoSellDefinition());
+                inv.getHotbar().setItemStackForSlot(inv.getActiveHotbarSlot(), updated);
+
+                context.sender().sendMessage(Message.raw("Enabled autosell on current tool"));
+                return CompletableFuture.completedFuture(null);
+            }
+
+            var prev = autoSell.isAutoSellEnabled();
+            autoSell.setAutoSellEnabled(!prev);
+            var newItem = held.withMetadata("AutoSell", AutoSellDefinition.CODEC, autoSell);
+            inv.getHotbar().setItemStackForSlot(inv.getActiveHotbarSlot(), newItem);
+
+            context.sender().sendMessage(Message.raw(prev ? "Disabled autosell on current tool" : "enabled autosell on current tool"));
+
+
+            return CompletableFuture.completedFuture(null);
+        }
+    }
+
 
     private static String getHeldItemIdOrNull(CommandContext context) {
         if (!(context.sender() instanceof Player player)) return null;

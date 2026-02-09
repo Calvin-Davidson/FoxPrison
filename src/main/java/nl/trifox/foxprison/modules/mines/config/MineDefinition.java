@@ -167,7 +167,7 @@ public class MineDefinition {
     }
 
     public Integer getOrder() {
-        return order;
+        return order == null ? 0 : order;
     }
 
     public void setOrder(Integer order) {

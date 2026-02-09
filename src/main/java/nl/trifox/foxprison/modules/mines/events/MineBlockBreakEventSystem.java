@@ -11,10 +11,12 @@ import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
 import com.hypixel.hytale.server.core.entity.UUIDComponent;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.event.events.ecs.BreakBlockEvent;
+import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.modules.entity.item.ItemComponent;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import nl.trifox.foxprison.api.events.mines.MineBlockBreakEvent;
+import nl.trifox.foxprison.api.events.mines.MineDropsEvent;
 import nl.trifox.foxprison.modules.mines.config.AutoResetDefinition;
 import nl.trifox.foxprison.modules.mines.data.MineRuntimeState;
 import nl.trifox.foxprison.modules.mines.MineService;
@@ -26,12 +28,11 @@ import static com.hypixel.hytale.server.core.modules.interaction.BlockHarvestUti
 public class MineBlockBreakEventSystem extends EntityEventSystem<EntityStore, BreakBlockEvent> {
 
     private final MineService mineService;
-    private final IEventDispatcher<MineBlockBreakEvent, MineBlockBreakEvent> mineBLockBreakEventDispatcher;
 
     public MineBlockBreakEventSystem(MineService mineService) {
         super(BreakBlockEvent.class);
         this.mineService = mineService;
-        mineBLockBreakEventDispatcher = HytaleServer.get().getEventBus().dispatchFor(MineBlockBreakEvent.class);
+
     }
 
     @Override
@@ -55,7 +56,7 @@ public class MineBlockBreakEventSystem extends EntityEventSystem<EntityStore, Br
             if (!mine.getRegion().contains(pos.x, pos.y, pos.z)) continue;
 
             var event = new MineBlockBreakEvent(uuidComponent.getUuid(), world.getName(), pos.x, pos.y, pos.z, mine.getId());
-            var result = mineBLockBreakEventDispatcher.dispatch(event);
+            var result = HytaleServer.get().getEventBus().dispatchFor(MineBlockBreakEvent.class).dispatch(event);
             if (result.isCancelled()) {
                 event.setCancelled(true);
                 return;
@@ -67,9 +68,22 @@ public class MineBlockBreakEventSystem extends EntityEventSystem<EntityStore, Br
             var inv = player.getInventory();
             if (inv != null && blockType.getGathering() != null && blockType.getGathering().getBreaking() != null) {
                 var drops = getDrops(blockType, 1, null, blockType.getGathering().getBreaking().getDropListId());
+                var tool = inv.getItemInHand();
 
-                if (inv.getCombinedBackpackStorageHotbar().canAddItemStacks(drops)) {
-                    inv.getCombinedBackpackStorageHotbar().addItemStacks(drops);
+                var dropEvent = new MineDropsEvent(uuidComponent.getUuid(), world.getName(), pos.x, pos.y, pos.z,
+                        mine.getId(), blockType, tool, drops);
+
+                HytaleServer.get().getEventBus().dispatchFor(MineDropsEvent.class).dispatch(dropEvent);
+
+                if (dropEvent.isCancelled()) {
+                    return; // block was broken (if you manually broke it), but nothing is given
+                }
+
+                if (!dropEvent.getDrops().isEmpty()) {
+                    var container = inv.getCombinedBackpackStorageHotbar();
+                    if (container.canAddItemStacks(dropEvent.getDrops())) {
+                        container.addItemStacks(dropEvent.getDrops());
+                    }
                 }
             }
 

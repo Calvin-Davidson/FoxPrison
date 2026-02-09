@@ -14,23 +14,18 @@ import nl.trifox.foxprison.modules.ranks.event.PlayerEvents;
 public final class RankModule implements FoxModule {
 
     private final FoxPrisonPlugin plugin;
-    private final StorageModule storageModule;
-    private final EconomyModule economyModule;
 
     private RankService rankService;
 
     public RankModule(FoxPrisonPlugin plugin, StorageModule storageModule, EconomyModule economyModule) {
         this.plugin = plugin;
-        this.storageModule = storageModule;
-        this.economyModule = economyModule;
+
+        var economy = economyModule.getEconomyManager();
+        this.rankService = new RankService(storageModule.provider().ranks(), economy, plugin.getRanksConfig());
     }
 
     @Override
     public void start() {
-        var economy = economyModule.getEconomyManager();
-
-        this.rankService = new RankService(storageModule.provider().ranks(), economy, plugin.getRanksConfig());
-
         plugin.getCommandRegistry().registerCommand(new RankUpCommand(rankService));
         plugin.getCommandRegistry().registerCommand(new RankCommand(rankService));
 
@@ -47,4 +42,5 @@ public final class RankModule implements FoxModule {
         return rankService;
     }
 }
+
 

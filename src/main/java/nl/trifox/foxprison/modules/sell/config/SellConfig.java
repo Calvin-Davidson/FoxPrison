@@ -33,6 +33,10 @@ public final class SellConfig {
                             (cfg, v) -> cfg.sellAllEnabled = v,
                             cfg -> cfg.sellAllEnabled)
                     .add()
+                    .append(new KeyedCodec<>("AutoSellEnabled", Codec.BOOLEAN),
+                            (cfg, v) -> cfg.autoSellEnabled = v,
+                            cfg -> cfg.autoSellEnabled)
+                    .add()
                     .append(new KeyedCodec<>("SellAll", SellAllDefinition.CODEC),
                             (cfg, v) -> cfg.sellAll = (v == null ? new SellAllDefinition() : v),
                             cfg -> cfg.sellAll)
@@ -46,6 +50,7 @@ public final class SellConfig {
     private boolean enabled = true;
     private boolean sellEnabled = true;
     private boolean sellAllEnabled = true;
+    private boolean autoSellEnabled = true;
 
     private SellAllDefinition sellAll = new SellAllDefinition();
 
@@ -63,6 +68,8 @@ public final class SellConfig {
     public boolean isEnabled() { return enabled; }
     public boolean isSellEnabled() { return sellEnabled; }
     public boolean isSellAllEnabled() { return sellAllEnabled; }
+    public boolean isAutoSellEnabled() { return autoSellEnabled; }
+
     public SellAllDefinition getSellAll() { return sellAll; }
     public Map<String, SellPriceDefinition> getPrices() { return prices; }
 

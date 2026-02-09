@@ -35,7 +35,6 @@ public final class SellAdminCommands extends AbstractCommandCollection {
 
         addSubCommand(new SetPriceSub(config, economyManager));
         addSubCommand(new SumSub(config, economyManager));
-        addSubCommand(new ToggleAutoSell(config, economyManager));
     }
 
 
@@ -177,53 +176,6 @@ public final class SellAdminCommands extends AbstractCommandCollection {
             player.sendMessage(Message.raw(
                     "Inventory value: " + total + " (priced stacks: " + pricedStacks + ", skipped: " + skippedStacks + ")."
             ));
-
-            return CompletableFuture.completedFuture(null);
-        }
-    }
-
-    private static final class ToggleAutoSell extends AbstractAsyncCommand {
-
-        private final SellConfig sell;
-
-        private ToggleAutoSell(SellConfig sell, EconomyManager economyManager) {
-            super("autosell", "Toggle auto sell on the currently held tool");
-            requirePermission("foxprison.sell.command.selladmin.autosell");
-            this.sell = Objects.requireNonNull(sell);
-        }
-
-        @Override
-        @Nonnull
-        protected CompletableFuture<Void> executeAsync(@Nonnull CommandContext context) {
-            if (!(context.sender() instanceof Player player)) {
-                context.sender().sendMessage(Message.raw("This command is player-only."));
-                return CompletableFuture.completedFuture(null);
-            }
-
-            Inventory inv = player.getInventory();
-
-            ItemStack held = inv.getItemInHand();
-            if (held == null || held.isEmpty()) {
-                player.sendMessage(Message.raw("You're not holding anything."));
-                return CompletableFuture.completedFuture(null);
-            }
-
-            var autoSell = held.getFromMetadataOrNull("AutoSell", AutoSellDefinition.CODEC);
-            if (autoSell == null) {
-                ItemStack updated = held.withMetadata("AutoSell", AutoSellDefinition.CODEC, new AutoSellDefinition());
-                inv.getHotbar().setItemStackForSlot(inv.getActiveHotbarSlot(), updated);
-
-                context.sender().sendMessage(Message.raw("Enabled autosell on current tool"));
-                return CompletableFuture.completedFuture(null);
-            }
-
-            var prev = autoSell.isAutoSellEnabled();
-            autoSell.setAutoSellEnabled(!prev);
-            var newItem = held.withMetadata("AutoSell", AutoSellDefinition.CODEC, autoSell);
-            inv.getHotbar().setItemStackForSlot(inv.getActiveHotbarSlot(), newItem);
-
-            context.sender().sendMessage(Message.raw(prev ? "Disabled autosell on current tool" : "enabled autosell on current tool"));
-
 
             return CompletableFuture.completedFuture(null);
         }

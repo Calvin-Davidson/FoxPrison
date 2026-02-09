@@ -1,33 +1,27 @@
 package nl.trifox.foxprison.modules.sell.listeners;
 
-import com.hypixel.hytale.server.core.inventory.ItemStack;
 import nl.trifox.foxprison.api.events.mines.MineDropsEvent;
+import nl.trifox.foxprison.modules.sell.PlayerAutoSellService;
 import nl.trifox.foxprison.modules.sell.SellService;
-import nl.trifox.foxprison.modules.sell.config.AutoSellDefinition;
 
 public class AutoSellEventListener {
 
     private final SellService sellService;
+    private final PlayerAutoSellService playerAutoSellService;
 
-    public AutoSellEventListener(SellService sellService) {
+    public AutoSellEventListener(SellService sellService, PlayerAutoSellService playerAutoSellService) {
         this.sellService = sellService;
+        this.playerAutoSellService = playerAutoSellService;
     }
 
-    public MineDropsEvent handleMineDrops(MineDropsEvent event) {
-        if (event.isCancelled()) return event;
+    public void handleMineDrops(MineDropsEvent event) {
+        if (event.isCancelled()) return;
 
-        var tool = event.getToolInHand();
-        if (!hasAutoSell(tool)) return event;
+        if (!playerAutoSellService.isEnabled(event.getPlayerUuid())) return;
 
         boolean soldSomething = sellService.autoSell(event.getPlayerUuid(), event.getDrops());
-        if (!soldSomething) return event;
+        if (!soldSomething) return;
 
         event.getDrops().clear(); // auto sold
-        return event;
-    }
-
-    private boolean hasAutoSell(ItemStack stack) {
-        var autoSell = stack.getFromMetadataOrNull("AutoSell", AutoSellDefinition.CODEC);
-        return autoSell != null && autoSell.isAutoSellEnabled();
     }
 }

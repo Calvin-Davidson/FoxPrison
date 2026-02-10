@@ -56,20 +56,11 @@ ranks.max_rank=You are max rank.
 ranks.not_exist=Rank {rank} does not exist
 
 ranks.rankup.success=Ranked up to {rank}!
-ranks.rankup.cost=Rank up cost: {currency} {amount}
-ranks.rankup.not_enough=Not enough money to rank up. Need: {currency} {amount}
-ranks.rankup.economy_missing=Economy not available.
+ranks.rankup.not_enough_currency=Not enough money to rank up. Need: {currency} {amount}
 
-ranks.rankup.next=Next rank: {rank} ({currency} {amount})
-ranks.rankup.requirement.mine_locked=You must unlock mine {mine} first.
+ranks.command.rank_set.success=Set {player}'s rank to {rank}.
 
-ranks.rank_set.success=Set {player}'s rank to {rank}.
-ranks.rank_set.fail_unknown=Unknown rank id: {rank}
-
-ranks.rank_list.header=Available ranks:
-ranks.rank_list.entry= - {rank} (Cost: {currency} {amount})
-
-ranks.reload.success=Reloaded ranks configuration.
+ranks.not_exists=rank {rank_id} does not exist
 
 # -------------------------
 # Selling

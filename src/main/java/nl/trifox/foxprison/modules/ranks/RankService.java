@@ -104,7 +104,7 @@ public final class RankService implements PlayerRankService {
 
         var optionalRank = ranksConfig.get().getRank(rankId);
         if (optionalRank.isEmpty()) {
-            sender.sendMessage(Message.raw("The rank {rank} does not exist").param("rank", rankId));
+            sender.sendMessage(Message.translation("foxPrison.ranks.not_exists").param("rank_id", rankId));
             return CompletableFuture.completedFuture(false);
         }
 
@@ -114,9 +114,10 @@ public final class RankService implements PlayerRankService {
             data.setRankId(normalized);
             return data;
         }).thenApply(updated -> {
-            sender.sendMessage(Message.raw("changed the rank of {player} to {rank}")
+            sender.sendMessage(Message.translation("foxPrison.ranks.command.rank_set.success")
                     .param("player", player.getUsername())
-                    .param("rank", rankId));
+                    .param("rank_id", rankId)
+                    .param("rank", optionalRank.get().getDisplayName()));
             return true;
         });
     }
@@ -126,7 +127,7 @@ public final class RankService implements PlayerRankService {
         RankDefinition[] all = ranksConfig.get().getRanks();
 
         if (!economyManager.isAvailable()) {
-            player.sendMessage(Message.raw("Economy not available."));
+            player.sendMessage(Message.translation("foxPrison.economy.not_available"));
             return CompletableFuture.completedFuture(false);
         }
 
@@ -153,7 +154,7 @@ public final class RankService implements PlayerRankService {
             // Now we have data loaded (and cached by repo), do the economy operations outside the repo lock.
             int idx = indexOfRank(all, dataAfterLoad.getRankId());
             if (idx < 0 || idx + 1 >= all.length) {
-                player.sendMessage(Message.raw("You are max rank."));
+                player.sendMessage(Message.translation("foxPrison.ranks.max_rank"));
                 return CompletableFuture.completedFuture(false);
             }
 
@@ -164,9 +165,9 @@ public final class RankService implements PlayerRankService {
 
             for (CurrencyCostDefinition cost : costs) {
                 if (!economyManager.hasBalance(uuid, cost.getAmount(), cost.getCurrencyId())) {
-                    player.sendMessage(Message.raw(
-                            "Not enough " + cost.getCurrencyId() + " to rank up. Need: " + cost.getAmount()
-                    ));
+                    player.sendMessage(Message.translation("foxPrison.ranks.rankup.not_enough_currency")
+                            .param("currency", cost.getCurrencyId())
+                            .param("amount", cost.getAmount()));
                     return CompletableFuture.completedFuture(false);
                 }
             }
@@ -176,7 +177,7 @@ public final class RankService implements PlayerRankService {
             }
 
             dataAfterLoad.setRankId(next.getId());
-            player.sendMessage(Message.raw("Ranked up to " + next.getDisplayName() + "!"));
+            player.sendMessage(Message.translation("foxPrison.ranks.rankup.success").param("ranks", next.getDisplayName()));
 
             return repository.save(uuid, dataAfterLoad);
         });

@@ -31,11 +31,11 @@ public class RankCommand extends AbstractAsyncPlayerCommand {
         return service.getRankID(playerRef.getUuid()).thenCompose(rankID -> {
             var optionalRank = service.getRank(rankID);
             if (optionalRank.isEmpty()) {
-                playerRef.sendMessage(Message.translation("foxPrison.ranks.not_exist"));
+                playerRef.sendMessage(Message.raw("Rank does not exist"));
                 return CompletableFuture.completedFuture(null);
             }
 
-            playerRef.sendMessage(Message.translation("foxPrison.ranks.current").param("rank", optionalRank.get().getDisplayName()));
+            playerRef.sendMessage(Message.translation("foxPrison.ranks.command.current").param("rank", optionalRank.get().getDisplayName()));
             return CompletableFuture.completedFuture(null);
         });
     }

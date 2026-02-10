@@ -11,6 +11,11 @@ import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import nl.trifox.foxprison.modules.mines.MineService;
+import nl.trifox.foxprison.modules.mines.commands.admin.*;
+import nl.trifox.foxprison.modules.mines.commands.admin.autoreset.MineAutoResetCommands;
+import nl.trifox.foxprison.modules.mines.commands.admin.region.MineRegionCommand;
+import nl.trifox.foxprison.modules.mines.commands.admin.requirements.MineRequirementCommands;
+import nl.trifox.foxprison.modules.ranks.RankService;
 import org.checkerframework.checker.nullness.compatqual.NonNullDecl;
 
 import java.util.concurrent.CompletableFuture;
@@ -20,12 +25,23 @@ public class MineCommand extends AbstractAsyncPlayerCommand {
     private final MineService service;
     private final OptionalArg<String> mineArg;
 
-    public MineCommand(MineService service) {
+    public MineCommand(MineService mineService, RankService rankService
+    ) {
         super("mine", "Teleport to your mine (or a mine by id)");
-        this.service = service;
+        this.service = mineService;
         this.mineArg = withOptionalArg("mine", "Mine id", ArgTypes.STRING);
-
         requirePermission("foxprison.mines.command.mine");
+
+        addSubCommand(new MineRegionCommand(mineService));
+        addSubCommand(new MineCreateCommand(mineService));
+        addSubCommand(new MineDeleteCommand(mineService));
+        addSubCommand(new MineResetCommand(mineService));
+        addSubCommand(new MineSetBlockPatternCommand(mineService));
+        addSubCommand(new MineTpCommand(mineService));
+        addSubCommand(new MineListCommand(mineService));
+        addSubCommand(new MineRequirementCommands(mineService, rankService));
+        addSubCommand(new MineAutoResetCommands(mineService));
+        addSubCommand(new MineSetSpawn(mineService));
     }
 
     @NonNullDecl

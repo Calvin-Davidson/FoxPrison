@@ -1,5 +1,6 @@
 package nl.trifox.foxprison.modules.sell;
 
+import com.hypixel.hytale.server.core.event.events.player.PlayerDisconnectEvent;
 import nl.trifox.foxprison.FoxPrisonPlugin;
 import nl.trifox.foxprison.api.events.mines.MineDropsEvent;
 import nl.trifox.foxprison.framework.module.FoxModule;
@@ -10,6 +11,7 @@ import nl.trifox.foxprison.modules.sell.commands.player.SellAllCommand;
 import nl.trifox.foxprison.modules.sell.commands.player.SellCommand;
 import nl.trifox.foxprison.modules.sell.config.SellConfig;
 import nl.trifox.foxprison.modules.sell.listeners.AutoSellEventListener;
+import nl.trifox.foxprison.modules.sell.listeners.PlayerEvents;
 
 public class SellModule implements FoxModule {
 
@@ -41,6 +43,9 @@ public class SellModule implements FoxModule {
         foxPrisonPlugin.getCommandRegistry().registerCommand(new SellAdminCommands(sellConfig, economyModule.getEconomyManager()));
 
         if (sellConfig.isAutoSellEnabled()) {
+            var playerEvents = new PlayerEvents(playerAutoSellService);
+            foxPrisonPlugin.getEventRegistry().register(PlayerDisconnectEvent.class, playerEvents::onPlayerQuit);
+
             foxPrisonPlugin.getEventRegistry().register(MineDropsEvent.class, autoSellListener::handleMineDrops);
             foxPrisonPlugin.getCommandRegistry().registerCommand(new AutoSellCommand(playerAutoSellService));
         }

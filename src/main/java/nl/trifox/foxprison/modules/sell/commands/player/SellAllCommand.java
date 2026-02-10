@@ -62,7 +62,7 @@ public class SellAllCommand extends AbstractAsyncPlayerCommand {
             @NotNull World world
     ) {
         if (!sellConfig.isEnabled() || !sellConfig.isSellAllEnabled()) {
-            playerRef.sendMessage(Message.raw("SellAll is disabled."));
+            playerRef.sendMessage(Message.translation("foxPrison.sell.command.sellall.disabled"));
             return CompletableFuture.completedFuture(null);
         }
 
@@ -122,7 +122,7 @@ public class SellAllCommand extends AbstractAsyncPlayerCommand {
                 }
 
                 if (toSell.isEmpty() || total <= 0.0) {
-                    playerRef.sendMessage(Message.translation("foxPrison.sellall.nothing_to_sell"));
+                    playerRef.sendMessage(Message.translation("foxPrison.sell.command.sellall.nothing_to_sell"));
                     done.complete(null);
                     return;
                 }
@@ -136,7 +136,7 @@ public class SellAllCommand extends AbstractAsyncPlayerCommand {
                         for (SlotSell r : removed) {
                             r.container.setItemStackForSlot(r.slot, r.original);
                         }
-                        playerRef.sendMessage(Message.translation("foxPrison.sellall.fail"));
+                        playerRef.sendMessage(Message.translation("foxPrison.sell.command.sellall.fail"));
                         done.complete(null);
                         return;
                     }
@@ -152,12 +152,12 @@ public class SellAllCommand extends AbstractAsyncPlayerCommand {
                             r.container.setItemStackForSlot(r.slot, r.original);
                         }
                     });
-                    playerRef.sendMessage(Message.translation("foxPrison.sellall.fail"));
+                    playerRef.sendMessage(Message.translation("foxPrison.sell.command.sellall.fail"));
                     done.complete(null);
                     return;
                 }
 
-                playerRef.sendMessage(Message.translation("foxPrison.sellall.success").param("items_count", stacksSold).param("currency", "money").param("total", total));
+                playerRef.sendMessage(Message.translation("foxPrison.sell.command.sellall.success").param("items_count", stacksSold).param("currency", "money").param("total", total));
                 done.complete(null);
 
             } catch (Throwable t) {

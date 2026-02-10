@@ -45,7 +45,7 @@ public class SellCommand extends AbstractAsyncPlayerCommand {
             @NotNull World world
     ) {
         if (!sellConfig.isEnabled() || !sellConfig.isSellEnabled()) {
-            playerRef.sendMessage(Message.raw("Selling is disabled."));
+            playerRef.sendMessage(Message.translation("foxPrison.sell.command.sell.disabled"));
             return CompletableFuture.completedFuture(null);
         }
 
@@ -64,7 +64,7 @@ public class SellCommand extends AbstractAsyncPlayerCommand {
                 ItemStack inHand = inv.getItemInHand();
 
                 if (inHand == null || inHand.isEmpty()) {
-                    playerRef.sendMessage(Message.translation("foxPrison.sell.no_item_in_hand"));
+                    playerRef.sendMessage(Message.translation("foxPrison.sell.command.sell.no_item_in_hand"));
                     done.complete(null);
                     return;
                 }
@@ -74,14 +74,14 @@ public class SellCommand extends AbstractAsyncPlayerCommand {
 
                 SellPriceDefinition price = sellConfig.getPriceForItemId(itemId);
                 if (price == null || !price.isAllowSell() || price.getPriceEach() <= 0.0) {
-                    playerRef.sendMessage(Message.translation("sell.fail.single").param("item_id", itemId));
+                    playerRef.sendMessage(Message.translation("foxPrison.sell.command.sell.item_not_sellable").param("item_id", itemId));
                     done.complete(null);
                     return;
                 }
 
                 double total = price.getPriceEach() * qty;
                 if (total <= 0.0) {
-                    playerRef.sendMessage(Message.translation("sell.fail.single").param("item_id", itemId));
+                    playerRef.sendMessage(Message.translation("foxPrison.sell.command.sell.fail").param("item_id", itemId));
                     done.complete(null);
                     return;
                 }
@@ -101,7 +101,7 @@ public class SellCommand extends AbstractAsyncPlayerCommand {
 
                 ItemStackSlotTransaction tx = container.setItemStackForSlot(slot, ItemStack.EMPTY);
                 if (!tx.succeeded()) {
-                    playerRef.sendMessage(Message.translation("sell.fail.single").param("item_id", itemId));
+                    playerRef.sendMessage(Message.translation("foxPrison.sell.command.sell.fail").param("item_id", itemId));
                     done.complete(null);
                     return;
                 }
@@ -111,13 +111,13 @@ public class SellCommand extends AbstractAsyncPlayerCommand {
 
                 if (!depositOk) {
                     world.execute(() -> container.setItemStackForSlot(slot, inHand));
-                    playerRef.sendMessage(Message.translation("foxPrison.sell.fail.single").param("item_id", inHand.getItemId()));
+                    playerRef.sendMessage(Message.translation("foxPrison.sell.command.sell.fail").param("item_id", inHand.getItemId()));
                     done.complete(null);
                     return;
                 }
 
                 var totalFormatted = FoxPrisonPlugin.getInstance().getEconomyConfig().get().getCurrency(price.getCurrency()).format(total);
-                playerRef.sendMessage(Message.translation("foxPrison.sell.success.single")
+                playerRef.sendMessage(Message.translation("foxPrison.sell.command.sell.success")
                         .param("quantity", qty)
                         .param("item_id", itemId)
                         .param("currency_id", price.getCurrency())

@@ -49,8 +49,8 @@ economy.currency_reload.success=Reloaded economy configuration.
 # -------------------------
 # Ranks
 # -------------------------
-ranks.current=Your rank: {rank}
-ranks.current.other={player}'s rank: {rank}
+ranks.command.current=Your rank: {rank}
+ranks.command.current.other={player}'s rank: {rank}
 
 ranks.max_rank=You are max rank.
 ranks.not_exist=Rank {rank} does not exist
@@ -72,51 +72,18 @@ ranks.rank_list.entry= - {rank} (Cost: {currency} {amount})
 ranks.reload.success=Reloaded ranks configuration.
 
 # -------------------------
-# Mines
-# -------------------------
-mines.not_found=Mine not found: {mine}
-
-mines.teleport.success=Teleporting to mine {mine}...
-mines.teleport.fail=Couldn't teleport to mine {mine}.
-mines.teleport.locked=You haven't unlocked mine {mine}.
-
-mines.reset.started=Resetting mine {mine}...
-mines.reset.completed=Mine {mine} has been reset.
-mines.reset.failed=Failed to reset mine {mine}.
-mines.reset.cooldown=Mine {mine} can't be reset yet. Try again in {seconds}s.
-mines.reset.auto_broadcast=Mine {mine} has been automatically reset.
-
-mines.blocks_broken.stat=Blocks broken in mine {mine}: {blocks}
-
-# -------------------------
 # Selling
 # -------------------------
-sell.no_item_in_hand=You must hold an item to sell.
-sell.item_not_sellable=This item cannot be sold.
+sell.command.sell.no_item_in_hand=You must hold an item to sell.
+sell.command.sell.item_not_sellable=This item cannot be sold.
 
-sell.price_line=Sell price: {currency} {price} (x{multiplier} multiplier)
+sell.command.sell.success=Sold {quantity}x {item_id} for {currency} {total}.
+sell.command.sell.fail=Could not sell {item_id}.
 
-sell.success.single=Sold {quantity}x {item_id} for {currency} {total}.
-sell.fail.single=Could not sell {item_id}.
+sell.command.sell.disabled=Sell command is disabled
 
-sellall.started=Selling your inventory...
-sellall.success=Sold {items_count} items for {currency} {total}.
-sellall.nothing_to_sell=You have nothing to sell.
-sellall.fail=Sellall failed. Please try again.
+sell.command.sellall.success=Sold {items_count} items for {currency} {total}.
+sell.command.sellall.nothing_to_sell=You have nothing to sell.
+sell.command.sellall.fail=Sellall failed. Please try again.
 
-# -------------------------
-# Sell Admin
-# -------------------------
-selladmin.header=Sell Admin
-
-selladmin.setprice.success=Set sell price for {item} to {currency} {price}.
-selladmin.setprice.fail_item=Invalid item. Hold the item you want to set a price for.
-selladmin.setprice.fail_amount=Invalid price: {price}
-
-selladmin.removeprice.success=Removed sell price for {item}.
-selladmin.removeprice.not_found=No sell price found for {item}.
-
-selladmin.reload.success=Reloaded sell prices.
-
-selladmin.list.header=Sell prices:
-selladmin.list.entry= - {item}: {currency} {price}
+sell.command.sellall.disabled=Sellall is disabled

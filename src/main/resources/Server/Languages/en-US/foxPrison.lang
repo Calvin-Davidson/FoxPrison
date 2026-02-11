@@ -47,6 +47,13 @@ economy.currency_list.header=Available currencies:
 economy.currency_reload.success=Reloaded economy configuration.
 
 # -------------------------
+# Mines
+# -------------------------
+
+mines.not_exist=This mine does not exist
+mines.commands.autoreset.set.success=Autoreset modified
+
+# -------------------------
 # Ranks
 # -------------------------
 ranks.command.current=Your rank: {rank}

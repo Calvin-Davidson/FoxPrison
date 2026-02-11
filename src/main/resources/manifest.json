@@ -11,10 +11,10 @@
     "Website": "https://trifox.nl/project/FoxPrison",
     "ServerVersion": "*",
     "Dependencies": {
-        "TheNewEconomy:VaultUnlocked": "*"
+        
     },
     "OptionalDependencies": {
-        
+        "TheNewEconomy:VaultUnlocked": "*"
     },
     "DisabledByDefault": false,
     "Main": "nl.trifox.foxprison.FoxPrisonPlugin",

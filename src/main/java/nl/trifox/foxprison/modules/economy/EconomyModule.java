@@ -1,8 +1,10 @@
 package nl.trifox.foxprison.modules.economy;
 
+import com.hypixel.hytale.common.plugin.PluginIdentifier;
+import com.hypixel.hytale.common.semver.SemverRange;
+import com.hypixel.hytale.server.core.HytaleServer;
 import com.hypixel.hytale.server.core.event.events.player.PlayerDisconnectEvent;
 import com.hypixel.hytale.server.core.event.events.player.PlayerReadyEvent;
-import net.cfh.vault.VaultUnlockedServicesManager;
 import nl.trifox.foxprison.FoxPrisonPlugin;
 import nl.trifox.foxprison.framework.module.FoxModule;
 import nl.trifox.foxprison.framework.storage.StorageModule;
@@ -10,8 +12,8 @@ import nl.trifox.foxprison.modules.economy.command.player.BalanceCommand;
 import nl.trifox.foxprison.modules.economy.command.admin.EcoAdminCommand;
 import nl.trifox.foxprison.modules.economy.command.player.PayCommand;
 import nl.trifox.foxprison.modules.economy.event.PlayerEvents;
+import nl.trifox.foxprison.modules.economy.hooks.VaultUnlockedHook;
 import nl.trifox.foxprison.modules.economy.manager.FoxEconomyManager;
-import nl.trifox.foxprison.modules.economy.manager.VaultUnlockedEconomyManager;
 
 public final class EconomyModule implements FoxModule {
 
@@ -35,8 +37,9 @@ public final class EconomyModule implements FoxModule {
                 throw new RuntimeException(e);
             }
 
-            // Register into VaultUnlocked AFTER manager exists
-            VaultUnlockedServicesManager.get().economy(new VaultUnlockedEconomy(/* ideally pass economyManager */));
+            if (HytaleServer.get().getPluginManager().hasPlugin(PluginIdentifier.fromString("TheNewEconomy:VaultUnlocked"), SemverRange.WILDCARD)) {
+                VaultUnlockedHook.registerProvider();
+            }
 
             var registry = plugin.getCommandRegistry();
             registry.registerCommand(new BalanceCommand());
@@ -46,7 +49,9 @@ public final class EconomyModule implements FoxModule {
             plugin.getEventRegistry().registerGlobal(PlayerReadyEvent.class, PlayerEvents::onPlayerReady);
             plugin.getEventRegistry().registerGlobal(PlayerDisconnectEvent.class, PlayerEvents::onPlayerQuit);
         } else {
-            this.economyManager = new VaultUnlockedEconomyManager(VaultUnlockedServicesManager.get().economyObj());
+            if (HytaleServer.get().getPluginManager().hasPlugin(PluginIdentifier.fromString("TheNewEconomy:VaultUnlocked"), SemverRange.WILDCARD)) {
+                this.economyManager = VaultUnlockedHook.createConsumer();
+            }
         }
     }
 

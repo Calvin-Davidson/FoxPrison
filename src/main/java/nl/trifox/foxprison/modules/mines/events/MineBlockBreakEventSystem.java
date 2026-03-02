@@ -5,14 +5,11 @@ import com.hypixel.hytale.component.CommandBuffer;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.component.query.Query;
 import com.hypixel.hytale.component.system.EntityEventSystem;
-import com.hypixel.hytale.event.IEventDispatcher;
 import com.hypixel.hytale.server.core.HytaleServer;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
 import com.hypixel.hytale.server.core.entity.UUIDComponent;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.event.events.ecs.BreakBlockEvent;
-import com.hypixel.hytale.server.core.inventory.ItemStack;
-import com.hypixel.hytale.server.core.modules.entity.item.ItemComponent;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import nl.trifox.foxprison.api.events.mines.MineBlockBreakEvent;
@@ -106,6 +103,6 @@ public class MineBlockBreakEventSystem extends EntityEventSystem<EntityStore, Br
     @NullableDecl
     @Override
     public Query<EntityStore> getQuery() {
-        return Query.or(PlayerRef.getComponentType(), ItemComponent.getComponentType(), UUIDComponent.getComponentType());
+        return Query.or(PlayerRef.getComponentType(), UUIDComponent.getComponentType());
     }
 }

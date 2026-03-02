@@ -86,6 +86,11 @@ public class VaultUnlockedEconomyManager implements EconomyManager {
     }
 
     @Override
+    public String format(double amount, String currency) {
+        return economy.format(currency, BigDecimal.valueOf(amount));
+    }
+
+    @Override
     public TransferResult transfer(@NotNull UUID from, @NotNull UUID to, double amount, String reason, String currency) {
         return null;
     }
@@ -121,5 +126,15 @@ public class VaultUnlockedEconomyManager implements EconomyManager {
     public CompletableFuture<Void> ensureAccountAsync(UUID uuid) {
         ensureAccount(uuid); // no async needed
         return CompletableFuture.completedFuture(null);
+    }
+
+    @Override
+    public String getCurrencySingular(String currency) {
+        return economy.defaultCurrencyNameSingular(pluginName);
+    }
+
+    @Override
+    public String getCurrencyPlural(String currency) {
+        return economy.defaultCurrencyNamePlural(pluginName);
     }
 }

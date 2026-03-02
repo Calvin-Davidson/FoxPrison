@@ -24,8 +24,7 @@ public class VaultUnlockedEconomy implements Economy {
     @NotNull
     @Override
     public String getName() {
-
-        return "EcoTale";
+        return "FoxPrison";
     }
 
     @Override

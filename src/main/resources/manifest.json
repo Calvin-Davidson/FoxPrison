@@ -1,7 +1,7 @@
 {
     "Group": "FoxPrison",
     "Name": "FoxPrison",
-    "Version": "0.0.4",
+    "Version": "0.0.5",
     "Description": "An prison plugin for hytale",
     "Authors": [
         {
@@ -14,7 +14,8 @@
         
     },
     "OptionalDependencies": {
-        "TheNewEconomy:VaultUnlocked": "*"
+        "TheNewEconomy:VaultUnlocked": "*",
+        "fof1092:EssentialsPlus": "*"
     },
     "DisabledByDefault": false,
     "Main": "nl.trifox.foxprison.FoxPrisonPlugin",

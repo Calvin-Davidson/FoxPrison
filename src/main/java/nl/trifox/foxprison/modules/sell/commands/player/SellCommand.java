@@ -116,11 +116,12 @@ public class SellCommand extends AbstractAsyncPlayerCommand {
                     return;
                 }
 
-                var totalFormatted = FoxPrisonPlugin.getInstance().getEconomyConfig().get().getCurrency(price.getCurrency()).format(total);
+                var totalFormatted = economyManager.format(total, price.getCurrency());
                 playerRef.sendMessage(Message.translation("foxPrison.sell.command.sell.success")
                         .param("quantity", qty)
                         .param("item_id", itemId)
                         .param("currency_id", price.getCurrency())
+                        .param("currency", economyManager.getCurrencySingular(price.getCurrency()))
                         .param("total", totalFormatted));
 
                 done.complete(null);

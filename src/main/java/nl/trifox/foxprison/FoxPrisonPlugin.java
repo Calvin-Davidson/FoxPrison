@@ -64,6 +64,10 @@ public class FoxPrisonPlugin extends JavaPlugin {
 
     @Override
     protected void start() {
+        rankModule.start();
+        mineModule.start();
+        sellModule.start();;
+
         getLogger().atInfo().log("Plugin started!");
     }
 
@@ -78,9 +82,7 @@ public class FoxPrisonPlugin extends JavaPlugin {
         mineModule    = new MinesModule(this, rankModule, rankModule.getRankService());
         sellModule    = new SellModule(this, economyModule, sellConfig.get());
 
-        rankModule.start();
-        mineModule.start();
-        sellModule.start();;
+
 
         getLogger().atInfo().log("FoxPrison setup complete.");
     }
@@ -92,6 +94,8 @@ public class FoxPrisonPlugin extends JavaPlugin {
         rankModule.stop();
         mineModule.stop();
         sellModule.stop();
+
+        ranksConfig.save();
 
         super.shutdown();
     }

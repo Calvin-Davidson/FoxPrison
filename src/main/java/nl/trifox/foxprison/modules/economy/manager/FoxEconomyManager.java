@@ -313,6 +313,23 @@ public class FoxEconomyManager implements EconomyManager {
     }
 
     @Override
+    public String format(double amount, String currency) {
+        return economyConfig.getCurrency(currency).format(amount);
+    }
+
+
+
+    @Override
+    public String getCurrencySingular(String currency) {
+        return economyConfig.getCurrency(currency).getDisplayName();
+    }
+
+    @Override
+    public String getCurrencyPlural(String currency) {
+        return economyConfig.getCurrency(currency).getDisplayName();
+    }
+
+    @Override
     public TransferResult transfer(@NotNull UUID from, @NotNull UUID to, double amount, String reason, String currencyId) {
         if (from.equals(to)) return TransferResult.SELF_TRANSFER;
         if (!isValidDelta(amount)) return TransferResult.INVALID_AMOUNT;

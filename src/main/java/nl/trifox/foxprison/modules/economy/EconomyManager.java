@@ -22,6 +22,7 @@ public interface EconomyManager {
     boolean deposit(@Nonnull UUID playerUuid, double amount, String reason, String Currency);
     boolean withdraw(@Nonnull UUID playerUuid, double amount, String reason, String Currency);
     void setBalance(@Nonnull UUID playerUuid, double amount, String reason, String Currency);
+    String format(double amount, String currency);
 
     TransferResult transfer(@Nonnull UUID from, @Nonnull UUID to, double amount, String reason, String Currency);
 
@@ -37,4 +38,7 @@ public interface EconomyManager {
     void shutdown();
 
     CompletableFuture<Void> ensureAccountAsync(UUID uuid);
+
+    String getCurrencySingular(String currency);
+    String getCurrencyPlural(String currency);
 }

@@ -95,11 +95,11 @@ public class FoxPrisonPlugin extends JavaPlugin {
         mineModule.stop();
         sellModule.stop();
 
-        minesConfig.save();
-        ranksConfig.save();
-        coreConfig.save();
-        sellConfig.save();
-        economyConfig.save();
+        minesConfig.save().join();
+        ranksConfig.save().join();
+        coreConfig.save().join();
+        sellConfig.save().join();
+        economyConfig.save().join();
 
         super.shutdown();
     }

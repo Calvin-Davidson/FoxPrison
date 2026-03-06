@@ -33,11 +33,11 @@ public class SellModule implements FoxModule {
         var autoSellListener = new AutoSellEventListener(sellService, playerAutoSellService);
 
         if (sellConfig.isSellEnabled()) {
-            foxPrisonPlugin.getCommandRegistry().registerCommand(new SellCommand(economyModule.getEconomyManager(), sellConfig));
+            foxPrisonPlugin.getCommandRegistry().registerCommand(new SellCommand(economyModule.getEconomyManager(), FoxPrisonPlugin.getRankModule().getRankService(), foxPrisonPlugin.getRanksConfig().get(), sellConfig));
         }
         if (sellConfig.isSellAllEnabled())
         {
-            foxPrisonPlugin.getCommandRegistry().registerCommand(new SellAllCommand(economyModule.getEconomyManager(), sellConfig));
+            foxPrisonPlugin.getCommandRegistry().registerCommand(new SellAllCommand(economyModule.getEconomyManager(), FoxPrisonPlugin.getRankModule().getRankService(), foxPrisonPlugin.getRanksConfig().get(), sellConfig));
         }
 
         foxPrisonPlugin.getCommandRegistry().registerCommand(new SellAdminCommands(sellConfig, economyModule.getEconomyManager()));

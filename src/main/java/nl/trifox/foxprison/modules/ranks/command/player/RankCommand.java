@@ -28,15 +28,23 @@ public class RankCommand extends AbstractAsyncPlayerCommand {
     @NonNullDecl
     @Override
     protected CompletableFuture<Void> executeAsync(@NonNullDecl CommandContext commandContext, @NonNullDecl Store<EntityStore> store, @NonNullDecl Ref<EntityStore> ref, @NonNullDecl PlayerRef playerRef, @NonNullDecl World world) {
-        return service.getRankID(playerRef.getUuid()).thenCompose(rankID -> {
-            var optionalRank = service.getRank(rankID);
-            if (optionalRank.isEmpty()) {
-                playerRef.sendMessage(Message.raw("Rank does not exist"));
-                return CompletableFuture.completedFuture(null);
-            }
+        return service.getRankID(playerRef.getUuid())
+                .thenCombine(service.getPrestige(playerRef.getUuid()), (rankID, prestige) -> {
 
-            playerRef.sendMessage(Message.translation("foxPrison.ranks.command.current").param("rank", optionalRank.get().getDisplayName()));
-            return CompletableFuture.completedFuture(null);
-        });
+                    var optionalRank = service.getRank(rankID);
+
+                    if (optionalRank.isEmpty()) {
+                        playerRef.sendMessage(Message.raw("Rank does not exist"));
+                        return null;
+                    }
+
+                    playerRef.sendMessage(
+                            Message.translation("foxPrison.ranks.command.current")
+                                    .param("rank", optionalRank.get().getDisplayName())
+                                    .param("prestige", prestige)
+                    );
+
+                    return null;
+                });
     }
 }

@@ -56,7 +56,7 @@ mines.commands.autoreset.set.success=Autoreset modified
 # -------------------------
 # Ranks
 # -------------------------
-ranks.command.current=Your rank: {rank}
+ranks.command.current=Your rank: {rank} and prestige {prestige}
 ranks.command.current.other={player}'s rank: {rank}
 
 ranks.max_rank=You are max rank.
@@ -68,6 +68,9 @@ ranks.rankup.not_enough_currency=Not enough money to rank up. Need: {currency} {
 ranks.command.rank_set.success=Set {player}'s rank to {rank}.
 
 ranks.not_exists=rank {rank_id} does not exist
+
+prestige.failed.rank_to_low=You cannot prestige, your rank is to low
+prestige.success=Successfully prestiged
 
 # -------------------------
 # Selling

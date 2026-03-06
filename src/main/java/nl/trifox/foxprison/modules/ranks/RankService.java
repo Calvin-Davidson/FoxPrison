@@ -97,6 +97,46 @@ public final class RankService implements PlayerRankService {
                 .thenApply(currentRankId -> indexOfRank(all, currentRankId) >= requiredIdx);
     }
 
+    public CompletableFuture<Integer> getPrestige(UUID playerId) {
+        if (cache.containsKey(playerId))
+            return CompletableFuture.completedFuture(cache.get(playerId).getPrestige());
+
+        return repository.getOrCreate(playerId).thenApply(PlayerRankData::getPrestige);
+    }
+
+    public CompletableFuture<Boolean> canPrestige(UUID playerId) {
+        RankDefinition[] ranks = ranksConfig.get().getRanks();
+
+        return getRankIndex(playerId)
+                .thenApply(idx -> idx == ranks.length - 1);
+    }
+
+    public CompletableFuture<Boolean> prestige(PlayerRef player) {
+        UUID uuid = player.getUuid();
+        RankDefinition[] ranks = ranksConfig.get().getRanks();
+
+        return repository.update(uuid, data -> {
+
+            int idx = indexOfRank(ranks, data.getRankId());
+
+            if (idx != ranks.length - 1) {
+                player.sendMessage(Message.translation("foxPrison.prestige.failed.rank_to_low"));
+                return data;
+            }
+
+            data.setRankId(ranks[0].getId());
+            data.setPrestige(data.getPrestige() + 1);
+            player.sendMessage(
+                    Message.translation("foxPrison.prestige.success")
+                            .param("prestige", data.getPrestige()));
+
+            return data;
+
+        }).thenApply(updated -> {
+            cache.put(uuid, updated);
+            return true;
+        });
+    }
 
 
     public CompletableFuture<Boolean> setRankByName(CommandSender sender, PlayerRef player, String rankId) {
@@ -114,6 +154,8 @@ public final class RankService implements PlayerRankService {
             data.setRankId(normalized);
             return data;
         }).thenApply(updated -> {
+            cache.put(uuid, updated);
+
             sender.sendMessage(Message.translation("foxPrison.ranks.command.rank_set.success")
                     .param("player", player.getUsername())
                     .param("rank_id", rankId)
@@ -131,55 +173,58 @@ public final class RankService implements PlayerRankService {
             return CompletableFuture.completedFuture(false);
         }
 
-        // Do "load -> validate -> mutate -> persist" as one update operation.
-        return repository.update(uuid, data -> {
-            int idx = indexOfRank(all, data.getRankId());
-            if (idx < 0 || idx + 1 >= all.length) {
-                // keep data unchanged
+        // Get player's prestige first
+        return getPrestige(uuid).thenCompose(prestigeLevel -> {
+
+            double rankupMultiplier = 1.0 + ranksConfig.get().getPrestigeRankupMultiplier(prestigeLevel);
+
+            // "load -> validate -> mutate -> persist" as one update operation
+            return repository.update(uuid, data -> {
+                int idx = indexOfRank(all, data.getRankId());
+                if (idx < 0 || idx + 1 >= all.length) return data;
+
+                // no changes inside this update; costs handled outside
                 return data;
-            }
+            }).thenCompose(dataAfterLoad -> {
+                cache.put(uuid, dataAfterLoad);
 
-            RankDefinition next = all[idx + 1];
-            CurrencyCostDefinition[] costs = next.getCosts() != null
-                    ? next.getCosts().getCurrencies()
-                    : new CurrencyCostDefinition[0];
-
-            // Store the "target rank" temporarily by writing it only after economy succeeds.
-            // We'll just return data unchanged for now; the outer stage will handle economy and final write via save().
-            // BUT since we're already in update(), we want to avoid another save.
-            // So we do economy checks outside update() and only update rank if paid.
-            // (Hence: this update() should NOT do economy logic.)
-            return data;
-        }).thenCompose(dataAfterLoad -> {
-            // Now we have data loaded (and cached by repo), do the economy operations outside the repo lock.
-            int idx = indexOfRank(all, dataAfterLoad.getRankId());
-            if (idx < 0 || idx + 1 >= all.length) {
-                player.sendMessage(Message.translation("foxPrison.ranks.max_rank"));
-                return CompletableFuture.completedFuture(false);
-            }
-
-            RankDefinition next = all[idx + 1];
-            CurrencyCostDefinition[] costs = next.getCosts() != null
-                    ? next.getCosts().getCurrencies()
-                    : new CurrencyCostDefinition[0];
-
-            for (CurrencyCostDefinition cost : costs) {
-                if (!economyManager.hasBalance(uuid, cost.getAmount(), cost.getCurrencyId())) {
-                    player.sendMessage(Message.translation("foxPrison.ranks.rankup.not_enough_currency")
-                            .param("currency", cost.getCurrencyId())
-                            .param("amount", cost.getAmount()));
+                int idx = indexOfRank(all, dataAfterLoad.getRankId());
+                if (idx < 0 || idx + 1 >= all.length) {
+                    player.sendMessage(Message.translation("foxPrison.ranks.max_rank"));
                     return CompletableFuture.completedFuture(false);
                 }
-            }
 
-            for (CurrencyCostDefinition cost : costs) {
-                economyManager.withdraw(uuid, cost.getAmount(), cost.getCurrencyId());
-            }
+                RankDefinition next = all[idx + 1];
+                CurrencyCostDefinition[] costs = next.getCosts() != null
+                        ? next.getCosts().getCurrencies()
+                        : new CurrencyCostDefinition[0];
 
-            dataAfterLoad.setRankId(next.getId());
-            player.sendMessage(Message.translation("foxPrison.ranks.rankup.success").param("rank", next.getDisplayName()));
+                // Apply prestige rankup multiplier to each cost
+                for (CurrencyCostDefinition cost : costs) {
+                    double adjustedAmount = cost.getAmount() * rankupMultiplier;
+                    if (!economyManager.hasBalance(uuid, adjustedAmount, cost.getCurrencyId())) {
+                        player.sendMessage(Message.translation("foxPrison.ranks.rankup.not_enough_currency")
+                                .param("currency", cost.getCurrencyId())
+                                .param("amount", adjustedAmount));
+                        return CompletableFuture.completedFuture(false);
+                    }
+                }
 
-            return repository.save(uuid, dataAfterLoad);
+                // Withdraw after validation
+                for (CurrencyCostDefinition cost : costs) {
+                    double adjustedAmount = cost.getAmount() * rankupMultiplier;
+                    economyManager.withdraw(uuid, adjustedAmount, cost.getCurrencyId());
+                }
+
+                // Update rank
+                dataAfterLoad.setRankId(next.getId());
+                player.sendMessage(Message.translation("foxPrison.ranks.rankup.success")
+                        .param("rank", next.getDisplayName()));
+
+                // Persist updated rank
+                return repository.save(uuid, dataAfterLoad);
+            });
+
         });
     }
 }

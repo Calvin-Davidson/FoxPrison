@@ -13,6 +13,7 @@ public final class RanksConfig {
 
     // Store as array for codec support
     private RankDefinition[] ranks;
+    private PrestigeDefinition[] prestiges;
 
     public RanksConfig() {
         // Defaults when config is first created (or when key is absent depending on codec behavior)
@@ -21,6 +22,10 @@ public final class RanksConfig {
 
     public static final Codec<RankDefinition[]> RANK_ARRAY_CODEC =
             new ArrayCodec<>(RankDefinition.CODEC, RankDefinition[]::new);
+
+    public static final Codec<PrestigeDefinition[]> PRESTIGE_ARRAY_CODEC =
+            new ArrayCodec<>(PrestigeDefinition.CODEC, PrestigeDefinition[]::new);
+
 
     public static final BuilderCodec<RanksConfig> CODEC =
             BuilderCodec.builder(RanksConfig.class, RanksConfig::new)
@@ -35,10 +40,23 @@ public final class RanksConfig {
                             },
                             c -> c.ranks)
                     .add()
+                    .append(new KeyedCodec<>("Prestige", PRESTIGE_ARRAY_CODEC),
+                            (c, v) -> {
+                                if (v == null || v.length == 0) {
+                                    c.prestiges = new PrestigeDefinition[0];
+                                } else {
+                                    c.prestiges = v;
+                                }
+                            },
+                            c -> c.prestiges)
+                    .add()
                     .build();
 
     public RankDefinition[] getRanks() {
         return ranks == null ? new RankDefinition[0] : ranks;
+    }
+    public PrestigeDefinition[] getPrestiges() {
+        return prestiges == null ? new PrestigeDefinition[0] : prestiges;
     }
 
     public Optional<RankDefinition> getRank(String rankID) {
@@ -71,6 +89,27 @@ public final class RanksConfig {
         }
 
         return arr;
+    }
+
+    public double getPrestigeMultiplier(int prestigeLevel) {
+        PrestigeDefinition[] arr = getPrestiges();
+        if (arr.length == 0 || prestigeLevel <= 0) return 0.0;
+
+        if (prestigeLevel > arr.length) prestigeLevel = arr.length;
+
+        return arr[prestigeLevel - 1].getMultiplier();
+    }
+
+    /**
+     * Returns the rankup multiplier for a given prestige level.
+     */
+    public double getPrestigeRankupMultiplier(int prestigeLevel) {
+        PrestigeDefinition[] arr = getPrestiges();
+        if (arr.length == 0 || prestigeLevel <= 0) return 0.0;
+
+        if (prestigeLevel > arr.length) prestigeLevel = arr.length;
+
+        return arr[prestigeLevel - 1].getRankupMultiplier();
     }
 
     private static double round2(double v) {

@@ -7,6 +7,7 @@ import nl.trifox.foxprison.FoxPrisonPlugin;
 import nl.trifox.foxprison.framework.module.FoxModule;
 import nl.trifox.foxprison.framework.storage.StorageModule;
 import nl.trifox.foxprison.modules.economy.EconomyModule;
+import nl.trifox.foxprison.modules.ranks.command.player.PrestigeCommand;
 import nl.trifox.foxprison.modules.ranks.command.player.RankCommand;
 import nl.trifox.foxprison.modules.ranks.command.player.RankUpCommand;
 import nl.trifox.foxprison.modules.ranks.event.PlayerEvents;
@@ -28,6 +29,7 @@ public final class RankModule implements FoxModule {
     public void start() {
         plugin.getCommandRegistry().registerCommand(new RankUpCommand(rankService));
         plugin.getCommandRegistry().registerCommand(new RankCommand(rankService));
+        plugin.getCommandRegistry().registerCommand(new PrestigeCommand(rankService));
 
         plugin.getEventRegistry().registerGlobal(PlayerReadyEvent.class, PlayerEvents::onPlayerReady);
         plugin.getEventRegistry().registerGlobal(PlayerDisconnectEvent.class, PlayerEvents::onPlayerQuit);

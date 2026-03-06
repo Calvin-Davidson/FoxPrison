@@ -9,6 +9,8 @@ import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import nl.trifox.foxprison.FoxPrisonPlugin;
 import nl.trifox.foxprison.modules.economy.EconomyManager;
+import nl.trifox.foxprison.modules.ranks.RankService;
+import nl.trifox.foxprison.modules.ranks.config.RanksConfig;
 import nl.trifox.foxprison.modules.sell.config.SellConfig;
 import nl.trifox.foxprison.modules.sell.config.SellPriceDefinition;
 import org.jetbrains.annotations.NotNull;
@@ -26,12 +28,16 @@ import java.util.UUID;
 
 public class SellCommand extends AbstractAsyncPlayerCommand {
 
+    private final RankService rankService;
     private final EconomyManager economyManager;
+    private final RanksConfig ranksConfig;
     private final SellConfig sellConfig;
 
-    public SellCommand(EconomyManager economyManager, SellConfig sellConfig) {
+    public SellCommand(EconomyManager economyManager, RankService rankService, RanksConfig ranksConfig, SellConfig sellConfig) {
         super("sell", "sell the item in your hand");
         this.economyManager = economyManager;
+        this.rankService = rankService;
+        this.ranksConfig = ranksConfig;
         this.sellConfig = sellConfig;
         requirePermission("foxprison.sell.command.sell");
     }
@@ -49,89 +55,85 @@ public class SellCommand extends AbstractAsyncPlayerCommand {
             return CompletableFuture.completedFuture(null);
         }
 
-        CompletableFuture<Void> done = new CompletableFuture<>();
+        // Get the player's prestige first
+        return rankService.getPrestige(playerRef.getUuid())
+                .thenAcceptAsync(prestige -> {
 
-        world.execute(() -> {
-            try {
-                Player player = store.getComponent(ref, Player.getComponentType());
-                if (player == null) {
-                    playerRef.sendMessage(Message.translation("You're not in a world."));
-                    done.complete(null);
-                    return;
-                }
+                    world.execute(() -> {
+                        try {
+                            Player player = store.getComponent(ref, Player.getComponentType());
+                            if (player == null) {
+                                playerRef.sendMessage(Message.translation("You're not in a world."));
+                                return;
+                            }
 
-                Inventory inv = player.getInventory();
-                ItemStack inHand = inv.getItemInHand();
+                            Inventory inv = player.getInventory();
+                            ItemStack inHand = inv.getItemInHand();
 
-                if (inHand == null || inHand.isEmpty()) {
-                    playerRef.sendMessage(Message.translation("foxPrison.sell.command.sell.no_item_in_hand"));
-                    done.complete(null);
-                    return;
-                }
+                            if (inHand == null || inHand.isEmpty()) {
+                                playerRef.sendMessage(Message.translation("foxPrison.sell.command.sell.no_item_in_hand"));
+                                return;
+                            }
 
-                String itemId = inHand.getItemId();
-                int qty = inHand.getQuantity();
+                            String itemId = inHand.getItemId();
+                            int qty = inHand.getQuantity();
 
-                SellPriceDefinition price = sellConfig.getPriceForItemId(itemId);
-                if (price == null || !price.isAllowSell() || price.getPriceEach() <= 0.0) {
-                    playerRef.sendMessage(Message.translation("foxPrison.sell.command.sell.item_not_sellable").param("item_id", itemId));
-                    done.complete(null);
-                    return;
-                }
+                            double multiplier = 1.0 + ranksConfig.getPrestigeMultiplier(prestige);
 
-                double total = price.getPriceEach() * qty;
-                if (total <= 0.0) {
-                    playerRef.sendMessage(Message.translation("foxPrison.sell.command.sell.fail").param("item_id", itemId));
-                    done.complete(null);
-                    return;
-                }
+                            SellPriceDefinition price = sellConfig.getPriceForItemId(itemId);
+                            if (price == null || !price.isAllowSell() || price.getPriceEach() <= 0.0) {
+                                playerRef.sendMessage(Message.translation("foxPrison.sell.command.sell.item_not_sellable")
+                                        .param("item_id", itemId));
+                                return;
+                            }
 
-                // Determine where "item in hand" came from so we can remove it.
-                final boolean usingToolsItem = inv.usingToolsItem();
-                final ItemContainer container;
-                final short slot;
+                            double total = price.getPriceEach() * qty * multiplier;
+                            if (total <= 0.0) {
+                                playerRef.sendMessage(Message.translation("foxPrison.sell.command.sell.fail")
+                                        .param("item_id", itemId));
+                                return;
+                            }
 
-                if (usingToolsItem) {
-                    container = inv.getTools();
-                    slot = inv.getActiveToolsSlot();
-                } else {
-                    container = inv.getHotbar();
-                    slot = inv.getActiveHotbarSlot();
-                }
+                            // Determine which container
+                            final boolean usingToolsItem = inv.usingToolsItem();
+                            final ItemContainer container = usingToolsItem ? inv.getTools() : inv.getHotbar();
+                            final short slot = usingToolsItem ? inv.getActiveToolsSlot() : inv.getActiveHotbarSlot();
 
-                ItemStackSlotTransaction tx = container.setItemStackForSlot(slot, ItemStack.EMPTY);
-                if (!tx.succeeded()) {
-                    playerRef.sendMessage(Message.translation("foxPrison.sell.command.sell.fail").param("item_id", itemId));
-                    done.complete(null);
-                    return;
-                }
+                            ItemStackSlotTransaction tx = container.setItemStackForSlot(slot, ItemStack.EMPTY);
+                            if (!tx.succeeded()) {
+                                playerRef.sendMessage(Message.translation("foxPrison.sell.command.sell.fail")
+                                        .param("item_id", itemId));
+                                return;
+                            }
 
-                UUID uuid = playerRef.getUuid();
-                var depositOk = economyManager.deposit(uuid, total, "sellhand", price.getCurrency());
+                            UUID uuid = playerRef.getUuid();
+                            boolean depositOk = economyManager.deposit(uuid, total, "sellhand", price.getCurrency());
 
-                if (!depositOk) {
-                    world.execute(() -> container.setItemStackForSlot(slot, inHand));
-                    playerRef.sendMessage(Message.translation("foxPrison.sell.command.sell.fail").param("item_id", inHand.getItemId()));
-                    done.complete(null);
-                    return;
-                }
+                            if (!depositOk) {
+                                // refund item
+                                container.setItemStackForSlot(slot, inHand);
+                                playerRef.sendMessage(Message.translation("foxPrison.sell.command.sell.fail")
+                                        .param("item_id", itemId));
+                                return;
+                            }
 
-                var totalFormatted = economyManager.format(total, price.getCurrency());
-                playerRef.sendMessage(Message.translation("foxPrison.sell.command.sell.success")
-                        .param("quantity", qty)
-                        .param("item_id", itemId)
-                        .param("currency_id", price.getCurrency())
-                        .param("currency", economyManager.getCurrencySingular(price.getCurrency()))
-                        .param("total", totalFormatted));
+                            String totalFormatted = economyManager.format(total, price.getCurrency());
+                            playerRef.sendMessage(Message.translation("foxPrison.sell.command.sell.success")
+                                    .param("quantity", qty)
+                                    .param("item_id", itemId)
+                                    .param("currency_id", price.getCurrency())
+                                    .param("currency", economyManager.getCurrencySingular(price.getCurrency()))
+                                    .param("total", totalFormatted));
 
-                done.complete(null);
+                        } catch (Throwable t) {
+                            playerRef.sendMessage(Message.translation("foxPrison.sell.command.sell.fail")
+                                    .param("item_id", "unknown"));
+                            FoxPrisonPlugin.getInstance().getLogger().atSevere().log("Sell command error", t);
+                        }
+                    });
 
-            } catch (Throwable t) {
-                done.completeExceptionally(t);
-            }
-        });
+                });
 
-        return done;
     }
 }
 

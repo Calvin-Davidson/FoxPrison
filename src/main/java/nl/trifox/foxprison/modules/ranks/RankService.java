@@ -177,7 +177,7 @@ public final class RankService implements PlayerRankService {
             }
 
             dataAfterLoad.setRankId(next.getId());
-            player.sendMessage(Message.translation("foxPrison.ranks.rankup.success").param("ranks", next.getDisplayName()));
+            player.sendMessage(Message.translation("foxPrison.ranks.rankup.success").param("rank", next.getDisplayName()));
 
             return repository.save(uuid, dataAfterLoad);
         });

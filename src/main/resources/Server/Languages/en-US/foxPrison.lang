@@ -22,6 +22,10 @@ cant_target_self_console=Cannot target self as you are not a player
 # Economy / Balances
 # -------------------------
 economy.not_available=Economy not available.
+economy.no_data_available=No economy data available.
+
+economy.balancetop.header=Top {amount} balances:
+economy.balancetop.entry={rank}. {player} - {currency} {balance}
 
 economy.balance.self=Your balance: {currency} {amount}
 economy.balance.other={player}'s balance: {currency} {amount}

@@ -9,6 +9,7 @@ import com.hypixel.hytale.server.core.event.events.player.PlayerReadyEvent;
 import nl.trifox.foxprison.FoxPrisonPlugin;
 import nl.trifox.foxprison.framework.module.FoxModule;
 import nl.trifox.foxprison.framework.storage.StorageModule;
+import nl.trifox.foxprison.modules.economy.command.player.BalTopCommand;
 import nl.trifox.foxprison.modules.economy.command.player.BalanceCommand;
 import nl.trifox.foxprison.modules.economy.command.admin.EcoAdminCommand;
 import nl.trifox.foxprison.modules.economy.command.player.PayCommand;
@@ -55,6 +56,7 @@ public final class EconomyModule implements FoxModule {
             registry.registerCommand(new BalanceCommand());
             registry.registerCommand(new EcoAdminCommand());
             registry.registerCommand(new PayCommand());
+            registry.registerCommand(new BalTopCommand());
 
             plugin.getEventRegistry().registerGlobal(PlayerReadyEvent.class, PlayerEvents::onPlayerReady);
             plugin.getEventRegistry().registerGlobal(PlayerDisconnectEvent.class, PlayerEvents::onPlayerQuit);

@@ -10,6 +10,7 @@ import nl.trifox.foxprison.framework.storage.repositories.PlayerBalanceRepositor
 import nl.trifox.foxprison.modules.economy.EconomyManager;
 import nl.trifox.foxprison.modules.economy.config.CurrencyDefinition;
 import nl.trifox.foxprison.modules.economy.config.EconomyConfig;
+import nl.trifox.foxprison.modules.economy.data.LeaderboardEntry;
 import nl.trifox.foxprison.modules.economy.data.PlayerBalanceData;
 import nl.trifox.foxprison.modules.economy.enums.TransferResult;
 import org.jetbrains.annotations.NotNull;
@@ -194,40 +195,6 @@ public class FoxEconomyManager implements EconomyManager {
             return playerBalanceData;
         });
     }
-
-    // ========== Balance Ops (Default currency) ==========
-
-    @Override
-    public double getBalance(@Nonnull UUID playerUuid) {
-        return getBalance(playerUuid, defaultCurrencyId());
-    }
-
-    @Override
-    public boolean hasBalance(@Nonnull UUID playerUuid, double amount) {
-        return hasBalance(playerUuid, amount, defaultCurrencyId());
-    }
-
-    @Override
-    public boolean deposit(@Nonnull UUID playerUuid, double amount, String reason) {
-        return deposit(playerUuid, amount, reason, defaultCurrencyId());
-    }
-
-    @Override
-    public boolean withdraw(@Nonnull UUID playerUuid, double amount, String reason) {
-        return withdraw(playerUuid, amount, reason, defaultCurrencyId());
-    }
-
-    @Override
-    public void setBalance(@Nonnull UUID playerUuid, double amount, String reason) {
-        setBalance(playerUuid, amount, reason, defaultCurrencyId());
-    }
-
-    @Override
-    public TransferResult transfer(@Nonnull UUID from, @Nonnull UUID to, double amount, String reason) {
-        return transfer(from, to, amount, reason, defaultCurrencyId());
-    }
-
-    // ========== Balance Ops (Multi-currency) ==========
 
     @Override
     public double getBalance(@NotNull UUID playerUuid, String currencyId) {
@@ -526,10 +493,13 @@ public class FoxEconomyManager implements EconomyManager {
 
     // ========== Leaderboard / Perf ==========
 
-    public List<Map.Entry<UUID, PlayerBalanceData>> getLeaderboard(int limit) {
+    @Override
+    public List<LeaderboardEntry> getLeaderboard(int limit, String currencyId) {
+        String currency = resolveCurrencyOrNull(currencyId);
+        if (currency == null) return List.of();
+
         long now = System.currentTimeMillis();
         if (cachedLeaderboard == null || now - lastLeaderboardRebuild > LEADERBOARD_CACHE_MS) {
-            String currency = defaultCurrencyId();
             cachedLeaderboard = cache.entrySet().stream()
                     .sorted((a, b) -> Double.compare(
                             b.getValue().getBalance(currency),
@@ -539,7 +509,17 @@ public class FoxEconomyManager implements EconomyManager {
                     .collect(Collectors.toList());
             lastLeaderboardRebuild = now;
         }
-        return cachedLeaderboard.stream().limit(limit).collect(Collectors.toList());
+
+        List<Map.Entry<UUID, PlayerBalanceData>> page = cachedLeaderboard.stream()
+                .limit(limit)
+                .toList();
+
+        List<LeaderboardEntry> result = new ArrayList<>(page.size());
+        for (int i = 0; i < page.size(); i++) {
+            Map.Entry<UUID, PlayerBalanceData> entry = page.get(i);
+            result.add(new LeaderboardEntry(i + 1, entry.getKey(), entry.getValue().getBalance(currency), currencyId));
+        }
+        return result;
     }
 
     private void cleanupStaleLocks() {
@@ -561,12 +541,6 @@ public class FoxEconomyManager implements EconomyManager {
         if (removed > 0) {
             logger.at(Level.FINE).log("Cleaned up %d stale player locks", removed);
         }
-    }
-
-    private String resolvePlayerName(UUID uuid) {
-        var player = Universe.get().getPlayer(uuid);
-        if (player != null) return player.getUsername();
-        return uuid.toString().substring(0, UUID_PREVIEW_LENGTH) + "...";
     }
 
     @Override

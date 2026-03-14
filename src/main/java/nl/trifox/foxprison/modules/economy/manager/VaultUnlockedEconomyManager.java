@@ -3,10 +3,13 @@ package nl.trifox.foxprison.modules.economy.manager;
 import net.milkbowl.vault2.economy.Economy;
 import nl.trifox.foxprison.FoxPrisonPlugin;
 import nl.trifox.foxprison.modules.economy.EconomyManager;
+import nl.trifox.foxprison.modules.economy.data.LeaderboardEntry;
 import nl.trifox.foxprison.modules.economy.enums.TransferResult;
 import org.jetbrains.annotations.NotNull;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -18,46 +21,6 @@ public class VaultUnlockedEconomyManager implements EconomyManager {
     public VaultUnlockedEconomyManager(Economy economy) {
         this.economy = economy;
         pluginName = FoxPrisonPlugin.getInstance().getName();
-    }
-
-    @Override
-    public double getBalance(@NotNull UUID playerUuid) {
-        return economy.balance(pluginName, playerUuid).doubleValue();
-    }
-
-    @Override
-    public boolean hasBalance(@NotNull UUID playerUuid, double amount) {
-        return economy.has(pluginName, playerUuid, BigDecimal.valueOf(amount));
-    }
-
-    @Override
-    public boolean deposit(@NotNull UUID playerUuid, double amount, String reason) {
-        return economy.deposit(pluginName, playerUuid, BigDecimal.valueOf(amount)).transactionSuccess();
-    }
-
-    @Override
-    public boolean withdraw(@NotNull UUID playerUuid, double amount, String reason) {
-        return economy.withdraw(pluginName, playerUuid, BigDecimal.valueOf(amount)).transactionSuccess();
-    }
-
-    @Override
-    public void setBalance(@NotNull UUID playerUuid, double amount, String reason) {
-        economy.set(pluginName, playerUuid, BigDecimal.valueOf(amount));
-    }
-
-    @Override
-    public TransferResult transfer(@NotNull UUID from, @NotNull UUID to, double amount, String reason) {
-        if (!economy.has(pluginName, from, BigDecimal.valueOf(amount))) {
-            return TransferResult.INSUFFICIENT_FUNDS;
-        }
-
-        if (from.equals(to)) {
-            return TransferResult.SELF_TRANSFER;
-        }
-
-        economy.withdraw(pluginName, from, BigDecimal.valueOf(amount));
-        economy.deposit(pluginName, to, BigDecimal.valueOf(amount));
-        return TransferResult.SUCCESS;
     }
 
     @Override
@@ -136,5 +99,14 @@ public class VaultUnlockedEconomyManager implements EconomyManager {
     @Override
     public String getCurrencyPlural(String currency) {
         return economy.defaultCurrencyNamePlural(pluginName);
+    }
+
+    @Override
+    public List<LeaderboardEntry> getLeaderboard(int limit, String currency) {
+        return economy.getUUIDNameMap().keySet().stream()
+                .map(uuid -> new LeaderboardEntry(0, uuid, getBalance(uuid, currency), currency))
+                .sorted((a, b) -> Double.compare(b.balance(), a.balance()))
+                .limit(limit)
+                .toList();
     }
 }

@@ -164,6 +164,48 @@ public final class RankService implements PlayerRankService {
         });
     }
 
+    /* =========================================================
+       CONFIG MUTATION: used by the rank editor UI
+       ========================================================= */
+
+    public CompletableFuture<Boolean> setRankDisplayName(String rankId, String displayName) {
+        var opt = ranksConfig.get().getRank(rankId);
+        if (opt.isEmpty()) return CompletableFuture.completedFuture(false);
+        opt.get().setDisplayName(displayName.trim());
+        return ranksConfig.save().thenApply(_ -> true);
+    }
+
+    public CompletableFuture<Boolean> setRankCurrencyCost(String rankId, String currencyId, double amount) {
+        var opt = ranksConfig.get().getRank(rankId);
+        if (opt.isEmpty()) return CompletableFuture.completedFuture(false);
+        opt.get().getCosts().setCurrencyCost(currencyId, amount);
+        return ranksConfig.save().thenApply(_ -> true);
+    }
+
+    public CompletableFuture<Boolean> deleteRank(String rankId) {
+        RankDefinition[] all = ranksConfig.get().getRanks();
+        int idx = indexOfRank(all, rankId);
+        if (idx == -1) return CompletableFuture.completedFuture(false);
+
+        RankDefinition[] newArr = new RankDefinition[all.length - 1];
+        System.arraycopy(all, 0, newArr, 0, idx);
+        System.arraycopy(all, idx + 1, newArr, idx, all.length - idx - 1);
+        ranksConfig.get().setRanks(newArr);
+        return ranksConfig.save().thenApply(_ -> true);
+    }
+
+    public CompletableFuture<Boolean> createRank(String id, String displayName, double cost) {
+        if (id == null || id.isBlank()) return CompletableFuture.completedFuture(false);
+        if (ranksConfig.get().getRank(id).isPresent()) return CompletableFuture.completedFuture(false);
+
+        RankDefinition newRank = new RankDefinition(id.trim(), displayName.trim(), cost);
+        RankDefinition[] old = ranksConfig.get().getRanks();
+        RankDefinition[] newArr = java.util.Arrays.copyOf(old, old.length + 1);
+        newArr[newArr.length - 1] = newRank;
+        ranksConfig.get().setRanks(newArr);
+        return ranksConfig.save().thenApply(_ -> true);
+    }
+
     public CompletableFuture<Boolean> rankup(PlayerRef player) {
         UUID uuid = player.getUuid();
         RankDefinition[] all = ranksConfig.get().getRanks();

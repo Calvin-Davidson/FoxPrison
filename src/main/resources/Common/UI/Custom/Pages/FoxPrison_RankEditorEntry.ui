@@ -1,0 +1,52 @@
+$C = "../Common.ui";
+
+Group #EntryCard {
+  LayoutMode: Top;
+  Background: $C.@InputBoxBackground;
+  Padding: (Top: 8, Bottom: 6, Left: 12, Right: 12);
+  Anchor: (Bottom: 6);
+
+  Group {
+    LayoutMode: Left;
+    FlexWeight: 1;
+
+    Group {
+      LayoutMode: Top;
+      FlexWeight: 1;
+
+      Label #RankName {
+        Style: (
+          FontSize: 16,
+          RenderBold: true,
+          TextColor: #b4c8c9
+        );
+        Anchor: (Vertical: 0);
+        Padding: (Right: 8);
+      }
+
+      Label #RankInfo {
+        Style: (
+          FontSize: 11,
+          TextColor: #96a9be
+        );
+        Anchor: (Top: 2);
+      }
+    }
+
+    Group {
+      LayoutMode: Left;
+      Anchor: (Vertical: 0);
+
+      $C.@SmallSecondaryTextButton #EditButton {
+        @Text = "Edit";
+        Anchor: (Width: 70);
+      }
+
+      $C.@CancelTextButton #DeleteButton {
+        @Text = "Delete";
+        Anchor: (Left: 6, Height: $C.@SmallButtonHeight, Width: 80);
+      }
+    }
+  }
+}
+

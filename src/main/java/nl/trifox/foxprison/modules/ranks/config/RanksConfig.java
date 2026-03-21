@@ -55,6 +55,11 @@ public final class RanksConfig {
     public RankDefinition[] getRanks() {
         return ranks == null ? new RankDefinition[0] : ranks;
     }
+
+    public void setRanks(RankDefinition[] ranks) {
+        this.ranks = ranks;
+    }
+
     public PrestigeDefinition[] getPrestiges() {
         return prestiges == null ? new PrestigeDefinition[0] : prestiges;
     }

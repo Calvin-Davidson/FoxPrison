@@ -28,12 +28,17 @@ public final class RankDefinition {
     private RankCostsDefinition costs = new RankCostsDefinition();
 
     public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
+
     public String getDisplayName() { return displayName; }
+    public void setDisplayName(String displayName) { this.displayName = displayName; }
 
     public RankCostsDefinition getCosts() {
         if (costs == null) costs = new RankCostsDefinition();
         return costs;
     }
+
+    public void setCosts(RankCostsDefinition costs) { this.costs = costs; }
 
     public RankDefinition() {
 

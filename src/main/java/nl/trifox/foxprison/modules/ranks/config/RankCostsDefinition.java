@@ -41,6 +41,10 @@ public final class RankCostsDefinition {
         return blocksMined;
     }
 
+    public void setBlocksMined(long blocksMined) {
+        this.blocksMined = Math.max(0L, blocksMined);
+    }
+
     public double getCurrencyCost(String currencyId) {
         String id = CurrencyDefinition.normalize(currencyId);
         for (CurrencyCostDefinition c : getCurrencies()) {

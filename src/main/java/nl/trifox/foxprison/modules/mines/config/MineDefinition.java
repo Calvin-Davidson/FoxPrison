@@ -173,4 +173,8 @@ public class MineDefinition {
     public void setOrder(Integer order) {
         this.order = order;
     }
+
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
 }

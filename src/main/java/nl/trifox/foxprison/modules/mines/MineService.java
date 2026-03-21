@@ -387,4 +387,38 @@ public class MineService {
         if (req == null) return 0;
         return mine.getOrder();
     }
+
+    public CompletableFuture<Boolean> setDisplayName(String mineId, String displayName) {
+        mineId = mineId.trim().toLowerCase();
+        if (mineId.isBlank() || displayName == null || displayName.trim().isEmpty())
+            return CompletableFuture.completedFuture(false);
+
+        MineDefinition mine = findMine(mineId).orElse(null);
+        if (mine == null) return CompletableFuture.completedFuture(false);
+
+        mine.setDisplayName(displayName.trim());
+        return mines.save().thenApply(_ -> true);
+    }
+
+    public CompletableFuture<Boolean> setMineOrder(String mineId, int order) {
+        mineId = mineId.trim().toLowerCase();
+        if (mineId.isBlank()) return CompletableFuture.completedFuture(false);
+
+        MineDefinition mine = findMine(mineId).orElse(null);
+        if (mine == null) return CompletableFuture.completedFuture(false);
+
+        mine.setOrder(order);
+        return mines.save().thenApply(_ -> true);
+    }
+
+    public CompletableFuture<Boolean> setAllowedRanks(String mineId, String[] ranks) {
+        mineId = mineId.trim().toLowerCase();
+        if (mineId.isBlank()) return CompletableFuture.completedFuture(false);
+
+        MineDefinition mine = findMine(mineId).orElse(null);
+        if (mine == null) return CompletableFuture.completedFuture(false);
+
+        mine.getRequirements().setAllowedRanks(ranks);
+        return mines.save().thenApply(_ -> true);
+    }
 }

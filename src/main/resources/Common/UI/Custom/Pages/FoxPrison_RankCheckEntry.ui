@@ -1,0 +1,19 @@
+$C = "../Common.ui";
+
+Group #RankEntry {
+  LayoutMode: Left;
+  Anchor: (Bottom: 4);
+
+  $C.@CheckBox #RankCheckBox {
+    Value: false;
+  }
+
+  Label #RankLabel {
+    Text: "Rank";
+    Anchor: (Left: 11);
+    Style: (
+      ...$C.@DefaultLabelStyle,
+      VerticalAlignment: Center
+    );
+  }
+}

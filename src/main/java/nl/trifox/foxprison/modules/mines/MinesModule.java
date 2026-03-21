@@ -3,6 +3,7 @@ package nl.trifox.foxprison.modules.mines;
 import nl.trifox.foxprison.FoxPrisonPlugin;
 import nl.trifox.foxprison.api.interfaces.PlayerRankService;
 import nl.trifox.foxprison.framework.module.FoxModule;
+import nl.trifox.foxprison.modules.mines.commands.admin.MineEditorCommand;
 import nl.trifox.foxprison.modules.mines.commands.player.MineCommand;
 import nl.trifox.foxprison.modules.mines.events.MineBlockBreakEventSystem;
 import nl.trifox.foxprison.modules.mines.events.MineItemRemoveSystem;
@@ -41,6 +42,7 @@ public final class MinesModule implements FoxModule {
         var registry = plugin.getCommandRegistry();
         registry.registerCommand(new MineCommand(mineService, rankSAervice));
         registry.registerCommand(new RankUpCommand(rankSAervice));
+        registry.registerCommand(new MineEditorCommand(plugin, mineService));
     }
 
     @Override
